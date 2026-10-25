@@ -81,3 +81,22 @@ test('a long-running device keeps announcing and is found by a device that start
   const b = await device('b')
   await until(async () => (await read(b.file('early.txt'))) === 'early', 15000, 'late device finds the long-running one')
 })
+
+test('a received file keeps the date it was modified on the other device', async (t) => {
+  for (const direct of [false, true]) {
+    const { device } = await setup(t)
+    const a = await device('laptop', { direct })
+    const b = await device('phone', { direct })
+    const when = new Date(2024, 4, 17, 9, 30)
+    await fs.writeFile(a.file('old report.pdf'), 'from last year')
+    await fs.utimes(a.file('old report.pdf'), when, when)
+    await a.sync()
+    await until(async () => (await read(b.file('old report.pdf'))) === 'from last year', 20000, 'received')
+    t.is(Math.round((await fs.stat(b.file('old report.pdf'))).mtimeMs / 1000), Math.round(when.getTime() / 1000), (direct ? 'direct' : 'stored') + ': same date')
+    // An edit later still syncs, with its own date.
+    await fs.writeFile(b.file('old report.pdf'), 'edited today')
+    await until(async () => (await read(a.file('old report.pdf'))) === 'edited today', 20000, 'edit back')
+    t.ok(Date.now() - (await fs.stat(a.file('old report.pdf'))).mtimeMs < 60000, 'the edit has today\'s date')
+    await Promise.all([a.close(), b.close()])
+  }
+})
