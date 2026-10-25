@@ -1,0 +1,15 @@
+# systemd user service. Install:
+#   mkdir -p ~/.config/systemd/user && cp contrib/syncker.service ~/.config/systemd/user/
+#   systemctl --user enable --now syncker
+#   loginctl enable-linger $USER   # keep syncing while logged out (optional)
+[Unit]
+Description=Syncker peer-to-peer folder sync
+After=network-online.target
+
+[Service]
+ExecStart=/usr/bin/env syncker start
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target

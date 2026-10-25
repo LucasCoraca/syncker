@@ -1,0 +1,11 @@
+// Entry for running the whole suite in one runtime: `bare test/all.js` / `node test/all.js`.
+import './sync.test.js'
+import './safety.test.js'
+import './edge.test.js'
+import './fuzz.test.js'
+import './sse.test.js'
+import './selective.test.js'
+import './drives.test.js'
+import './activity.test.js'
+import './join.test.js'
+import './direct.test.js'

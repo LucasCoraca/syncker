@@ -1,0 +1,8 @@
+.gradle/
+build/
+app/build/
+local.properties
+.bare-kit/
+app/src/main/jniLibs/
+app/src/main/assets/syncker.bundle
+app/libs/

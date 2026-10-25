@@ -1,0 +1,2279 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f8fafd" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1b1b1f" media="(prefers-color-scheme: dark)">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"%3E%3Cpath fill="%231a73e8" d="M24 6a14 14 0 0 1 13.5 10.4A10 10 0 0 1 36 36H13a11 11 0 0 1-1.6-21.9A14 14 0 0 1 24 6z"/%3E%3Cpath fill="%23fff" d="M24 15.5a8.5 8.5 0 0 1 8.3 6.7l2.2-1.2-1.2 6.6-6-3 2.2-1.2A5.5 5.5 0 0 0 19 24h-3a8.5 8.5 0 0 1 8-8.5zm-8 11.4 6 3-2.2 1.2A5.5 5.5 0 0 0 29.5 27h3a8.5 8.5 0 0 1-16.5 1.7l-2.2 1.2z"/%3E%3C/svg%3E">
+<title>Syncker</title>
+<style>
+  :root {
+    --bg: #f8fafd; --surface: #ffffff; --surface-2: #f0f4f9; --hover: #e9eef6; --press: #dde3ea; --selected: #c2e7ff;
+    --text: #1f1f1f; --muted: #5f6368; --faint: #80868b; --line: #e0e3e7;
+    --accent: #0b57d0; --accent-soft: #d3e3fd; --on-accent: #ffffff;
+    --ok: #188038; --warn: #b06000; --bad: #c5221f;
+    --shadow: 0 1px 3px rgba(60,64,67,.3), 0 4px 8px 3px rgba(60,64,67,.15);
+    --i-folder: #5f6368; --i-image: #d93025; --i-video: #d93025; --i-audio: #8430ce; --i-pdf: #ea4335;
+    --i-doc: #4285f4; --i-sheet: #0f9d58; --i-slide: #f4b400; --i-zip: #5f6368; --i-code: #1a73e8; --i-file: #5f6368;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1b1b1f; --surface: #232327; --surface-2: #2b2c31; --hover: #33353b; --press: #3d4047; --selected: #004a77;
+      --text: #e3e3e3; --muted: #a8abb0; --faint: #8e9196; --line: #3a3c42;
+      --accent: #a8c7fa; --accent-soft: #0842a0; --on-accent: #062e6f;
+      --ok: #6dd58c; --warn: #ffb95c; --bad: #f2b8b5;
+      --shadow: 0 1px 3px rgba(0,0,0,.5), 0 4px 8px 3px rgba(0,0,0,.3);
+      --i-folder: #a8abb0; --i-zip: #a8abb0; --i-file: #a8abb0; --i-code: #8ab4f8;
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.43 "Google Sans", Roboto, system-ui, -apple-system, "Segoe UI", sans-serif; -webkit-tap-highlight-color: transparent; }
+  [hidden] { display: none !important; }
+  button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+  svg.i { width: 20px; height: 20px; flex: none; fill: currentColor; }
+  .btn { display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: 99px; border: 1px solid var(--line); background: var(--surface); font-weight: 500; }
+  .btn:hover { background: var(--hover); }
+  .btn.primary { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
+  .btn.primary:hover { filter: brightness(1.08); }
+  .btn.text { border-color: transparent; background: none; color: var(--accent); }
+  .btn.text:hover { background: var(--accent-soft); }
+  .iconbtn { width: 40px; height: 40px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; color: var(--muted); flex: none; }
+  .iconbtn:hover { background: var(--hover); }
+  .small { color: var(--muted); font-size: 12px; }
+
+  /* ---- layout ---- */
+  #app { display: grid; grid-template-columns: 256px 1fr; grid-template-rows: 64px 1fr; height: 100vh; height: 100dvh; }
+  #topbar { grid-column: 1 / -1; display: flex; align-items: center; gap: 8px; padding: 8px 16px 8px 8px; }
+  .brand { display: flex; align-items: center; gap: 8px; width: 240px; padding-left: 8px; font-size: 22px; color: var(--text); flex: none; }
+  .brand svg { width: 36px; height: 36px; }
+  #menuBtn { display: none; }
+  .search { flex: 1; min-width: 0; max-width: 720px; display: flex; align-items: center; gap: 4px; background: var(--surface-2); border-radius: 99px; padding: 0 8px; height: 48px; }
+  .search:focus-within { background: var(--surface); box-shadow: var(--shadow); }
+  .search input { flex: 1; min-width: 0; border: 0; background: none; outline: none; font: inherit; font-size: 16px; color: var(--text); }
+  #syncChip { margin-left: auto; display: flex; align-items: center; gap: 8px; padding: 6px 14px 6px 10px; border-radius: 99px; color: var(--muted); cursor: pointer; white-space: nowrap; }
+  #syncChip:hover { background: var(--hover); }
+  #syncChip.ok svg { color: var(--ok); } #syncChip.busy svg { color: var(--accent); } #syncChip.error svg { color: var(--bad); }
+  #syncChip.busy svg { animation: spin 1.2s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  #sidebar { padding: 8px 12px 16px 0; display: flex; flex-direction: column; gap: 2px; overflow-y: auto; }
+  #sidebar .brand { display: none; }
+  .fname .t .st { margin-left: 10px; vertical-align: middle; }
+  #newBtn { margin: 4px 0 16px 8px; align-self: flex-start; padding: 16px 20px 16px 16px; border-radius: 16px; background: var(--surface); box-shadow: var(--shadow); border: 0; font-size: 14px; }
+  #newBtn:hover { background: var(--hover); }
+  .nav { display: flex; align-items: center; gap: 14px; height: 36px; padding: 0 16px 0 20px; border-radius: 0 99px 99px 0; color: var(--text); cursor: pointer; font-weight: 500; }
+  .nav:hover { background: var(--hover); }
+  .nav.on { background: var(--selected); }
+  .nav .count { margin-left: auto; font-size: 12px; color: var(--muted); }
+  .navhead { margin: 14px 0 4px 20px; font-size: 12px; font-weight: 500; color: var(--muted); letter-spacing: .02em; }
+  .nav .nm { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .nav .dstate { display: inline-flex; color: var(--muted); }
+  .nav .dstate svg { width: 16px; height: 16px; }
+  .nav .dstate.busy { color: var(--accent); } .nav .dstate.busy svg { animation: spin 1.2s linear infinite; }
+  .nav .dstate.bad { color: var(--bad); }
+  .nav.sub { font-weight: 400; color: var(--muted); }
+  .row.offline .t, .card.offline .t { color: var(--muted); }
+  .sel-list { max-height: 50vh; overflow-y: auto; margin: 8px -8px 0; }
+  .folder-field { display: flex; gap: 8px; align-items: center; }
+  .folder-field .field { flex: 1; min-width: 0; }
+  .fs-row { display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 8px; border: 0; border-radius: 8px; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+  .fs-row:hover { background: var(--hover); }
+  .fs-row svg { width: 20px; height: 20px; fill: currentColor; color: var(--i-folder, var(--muted)); flex: none; }
+  .fs-row span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #fsPath { word-break: break-all; margin: 0; }
+  .sel-row { display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 8px; cursor: pointer; }
+  .sel-row:hover { background: var(--hover); }
+  .sel-row input { width: 18px; height: 18px; accent-color: var(--accent); flex: none; }
+  .sel-row .grow { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .sel-row.all { border-bottom: 1px solid var(--line); border-radius: 0; margin-bottom: 4px; font-weight: 500; }
+  .sel-row { gap: 6px; padding-top: 4px; padding-bottom: 4px; cursor: default; }
+  .sel-row .grow { display: inline-flex; align-items: center; gap: 8px; }
+  .sel-row .grow svg { width: 20px; height: 20px; fill: currentColor; color: var(--i-folder, var(--muted)); flex: none; }
+  .sel-row.loose .grow svg { color: var(--muted); }
+  .sel-row .chev { width: 28px; height: 28px; }
+  .sel-row .chev svg { width: 20px; height: 20px; transition: transform .15s; }
+  .sel-row .chev.open svg { transform: rotate(90deg); }
+  .sel-row .small { white-space: nowrap; }
+  #selDlg { width: min(640px, calc(100vw - 32px)); }
+  #selSummaryLine.bad { color: var(--bad); }
+  .sel-opt { display: flex; gap: 10px; align-items: flex-start; margin-top: 10px; font-size: 14px; }
+  .sel-opt input { width: 18px; height: 18px; accent-color: var(--accent); flex: none; margin: 1px 0 0; }
+  .danger-zone { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn.danger { color: var(--bad); }
+  #driveDlg label { display: block; font-size: 12px; color: var(--muted); margin: 14px 0 4px; }
+  #driveDlg textarea { width: 100%; font: 13px/1.4 ui-monospace, monospace; padding: 10px; border: 1px solid var(--faint); border-radius: 6px; background: var(--surface); color: var(--text); resize: vertical; min-height: 60px; outline: none; }
+  .storage { margin: 16px 0 0 20px; padding-top: 12px; border-top: 1px solid var(--line); }
+  .storage b { font-weight: 500; }
+
+  #content { background: var(--surface); border-radius: 16px 0 0 0; display: flex; flex-direction: column; min-width: 0; min-height: 0; position: relative; }
+  @media (min-width: 801px) { #content { margin-right: 16px; border-radius: 16px; margin-bottom: 16px; } }
+  .head { display: flex; align-items: center; gap: 8px; padding: 12px 16px 4px 24px; min-height: 64px; }
+  .crumbs { flex: 1; min-width: 0; display: flex; align-items: center; flex-wrap: nowrap; overflow-x: auto; font-size: 22px; scrollbar-width: none; }
+  .crumbs a { padding: 4px 12px; border-radius: 99px; cursor: pointer; white-space: nowrap; color: var(--text); }
+  .crumbs a:first-child { margin-left: -12px; }
+  .crumbs a:hover { background: var(--hover); }
+  .crumbs .sep { color: var(--muted); display: inline-flex; }
+  @media (max-width: 800px) { .hide-sm { display: none; } #manageBtn { padding: 8px 10px; } }
+  .viewtoggle { display: flex; border: 1px solid var(--line); border-radius: 99px; overflow: hidden; flex: none; }
+  .viewtoggle button { padding: 6px 14px; display: inline-flex; color: var(--muted); }
+  .viewtoggle button.on { background: var(--accent-soft); color: var(--text); }
+  #banner { margin: 4px 16px 0 24px; padding: 10px 14px; border-radius: 12px; display: flex; gap: 10px; align-items: center; background: #fce8e6; color: #8c1d18; }
+  @media (prefers-color-scheme: dark) { #banner { background: #601410; color: #f9dedc; } }
+  #banner.info { background: var(--accent-soft); color: var(--text); }
+  #banner .grow { flex: 1; min-width: 0; }
+  #banner.info { flex-wrap: wrap; }
+  #banner .hold-acts { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  .scroll { flex: 1; overflow-y: auto; padding: 0 8px 96px 16px; min-height: 0; }
+  .cols, .row { display: grid; grid-template-columns: minmax(0, 1fr) 150px 160px 96px 48px; align-items: center; gap: 8px; }
+  .cols { position: sticky; top: 0; background: var(--surface); z-index: 1; height: 48px; padding: 0 8px; border-bottom: 1px solid var(--line); font-weight: 500; color: var(--text); }
+  .cols span { cursor: pointer; user-select: none; display: inline-flex; align-items: center; gap: 4px; }
+  .cols span:hover { color: var(--accent); }
+  .cols .arrow { font-size: 16px; color: var(--muted); }
+  .row { min-height: 48px; padding: 0 8px; border-bottom: 1px solid var(--line); cursor: default; user-select: none; }
+  .row:hover { background: var(--hover); }
+  .row.sel { background: var(--selected); }
+  .card.sel { background: var(--selected); }
+  .pickwrap { position: relative; display: inline-flex; flex: none; }
+  .pick { position: absolute; left: 50%; top: 50%; width: 22px; height: 22px; margin: -11px 0 0 -11px; border-radius: 50%; border: 2px solid var(--muted); background: var(--surface); display: none; align-items: center; justify-content: center; cursor: pointer; }
+  .pick svg { width: 16px; height: 16px; fill: #fff; visibility: hidden; }
+  .sel .pick { background: var(--accent); border-color: var(--accent); }
+  .sel .pick svg { visibility: visible; }
+  .sel .pick, .picking .pick { display: flex; }
+  .sel .pickwrap .ficon, .picking .pickwrap .ficon { visibility: hidden; }
+  @media (hover: hover) { .row:hover .pick, .card:hover .pick { display: flex; } .row:hover .pickwrap .ficon, .card:hover .pickwrap .ficon { visibility: hidden; } }
+  #selbar { display: none; flex: 1; min-width: 0; align-items: center; gap: 4px; background: var(--surface-2); border-radius: 99px; padding: 2px 8px 2px 2px; min-height: 44px; }
+  .head.picking > :not(#selbar) { display: none; }
+  .head.picking #selbar { display: flex; }
+  #selbar .count { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 0 4px; }
+  #selbar .count b { font-weight: 500; }
+  #selbar .iconbtn { color: var(--text); }
+  #selbar .iconbtn.danger { color: var(--bad); }
+  .cell-name { display: flex; align-items: center; gap: 14px; min-width: 0; padding: 6px 0; }
+  .fname { min-width: 0; }
+  .fname .t { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; }
+  .fname .sub { display: none; }
+  .cell { color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .tag { font-size: 11px; padding: 1px 8px; border-radius: 99px; background: #fef7e0; color: #7a4f00; margin-left: 6px; white-space: nowrap; }
+  @media (prefers-color-scheme: dark) { .tag { background: #4a3800; color: #ffdf99; } }
+  .state { display: inline-flex; align-items: center; gap: 4px; color: var(--muted); }
+  .state svg { width: 16px; height: 16px; }
+  .state.ok { color: var(--faint); } .state.busy { color: var(--accent); } .state.wait { color: var(--warn); } .state.bad { color: var(--bad); }
+  .bar { height: 4px; border-radius: 2px; background: var(--accent-soft); overflow: hidden; margin-top: 4px; width: 100%; max-width: 240px; }
+  .bar > i { display: block; height: 100%; background: var(--accent); width: 0; transition: width .4s; }
+  .bar.indet > i { width: 30%; animation: indet 1.2s ease-in-out infinite; }
+  @keyframes indet { from { transform: translateX(-100%); } to { transform: translateX(340%); } }
+
+  .ficon { width: 24px; height: 24px; flex: none; display: inline-flex; align-items: center; justify-content: center; }
+  .ficon svg { width: 24px; height: 24px; }
+  .ficon svg, .thumb svg, .empty svg { fill: currentColor; }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 16px; padding: 16px 8px; align-items: start; }
+  .card { background: var(--surface-2); border-radius: 12px; padding: 4px 4px 4px; cursor: default; user-select: none; display: flex; flex-direction: column; min-width: 0; }
+  .card:hover { background: var(--hover); }
+  .card .top { display: flex; align-items: center; gap: 12px; padding: 8px 4px 8px 12px; min-width: 0; }
+  .card .top .t { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
+  .card .thumb { aspect-ratio: 4 / 3; border-radius: 8px; background: var(--surface); display: flex; align-items: center; justify-content: center; overflow: hidden; }
+  .card .thumb img { width: 100%; height: 100%; object-fit: cover; }
+  .card .thumb svg { width: 64px; height: 64px; }
+  .card .foot { padding: 6px 8px 4px; font-size: 12px; color: var(--muted); display: flex; gap: 6px; align-items: center; min-height: 26px; }
+  .card.folder .thumb { display: none; }
+  #files .more { grid-column: 1 / -1; height: 1px; }
+
+  .empty { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; text-align: center; padding: 64px 16px; color: var(--muted); }
+  .empty svg { width: 120px; height: 120px; color: var(--line); }
+  .empty .big { font-size: 20px; color: var(--text); }
+
+  #dropOverlay { position: absolute; inset: 0; border: 2px solid var(--accent); background: color-mix(in srgb, var(--accent-soft) 70%, transparent); border-radius: 16px; display: flex; align-items: flex-end; justify-content: center; pointer-events: none; z-index: 5; }
+  #dropOverlay div { margin-bottom: 32px; background: var(--accent); color: var(--on-accent); padding: 12px 20px; border-radius: 12px; font-weight: 500; }
+
+  /* devices page */
+  .page { padding: 8px 24px 96px; max-width: 900px; }
+  .page h3 { font-size: 16px; font-weight: 500; margin: 24px 0 8px; }
+  .dev { display: flex; align-items: center; gap: 16px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 12px; margin-bottom: 8px; }
+  .dev .av { width: 40px; height: 40px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); display: flex; align-items: center; justify-content: center; flex: none; position: relative; }
+  @media (prefers-color-scheme: dark) { .dev .av { color: var(--text); } }
+  .dev .av .dot { position: absolute; right: -1px; bottom: -1px; width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--surface); background: var(--faint); }
+  .dev .av .dot.on { background: var(--ok); }
+  .dev .grow { flex: 1; min-width: 0; }
+  .dev .nm { font-weight: 500; }
+  .cam-points { margin: 0 0 8px; padding-left: 20px; font-size: 14px; }
+  .cam-points li { margin: 4px 0; }
+  .cam-points #camFolder { word-break: break-all; }
+  .btn.inline { height: auto; padding: 0 4px; min-height: 0; vertical-align: baseline; }
+  .invitebox { display: flex; gap: 24px; align-items: flex-start; border: 1px solid var(--line); border-radius: 12px; padding: 16px; flex-wrap: wrap; }
+  .qr { width: 200px; height: 200px; background: #fff; border-radius: 12px; padding: 8px; flex: none; }
+  .invitebox .grow { flex: 1; min-width: 220px; }
+  code.invite { display: block; font: 12px/1.5 ui-monospace, monospace; word-break: break-all; padding: 10px; background: var(--surface-2); border-radius: 8px; margin: 8px 0 12px; }
+  .kv { display: grid; grid-template-columns: 140px 1fr; gap: 6px 16px; }
+  .kv div:nth-child(odd) { color: var(--muted); }
+  .kv div { overflow-wrap: anywhere; }
+  .failed div { padding: 6px 0; border-bottom: 1px solid var(--line); }
+
+  /* transfer panel (bottom right, like Drive's upload panel) */
+  #panel { position: fixed; right: 24px; bottom: 0; width: 380px; background: var(--surface); border-radius: 16px 16px 0 0; box-shadow: var(--shadow); z-index: 20; overflow: hidden; display: flex; flex-direction: column; max-height: 60vh; }
+  #panel .ph { display: flex; align-items: center; gap: 4px; padding: 6px 8px 6px 20px; background: var(--surface-2); min-height: 52px; }
+  #panel .ph .ttl { flex: 1; font-weight: 500; font-size: 15px; }
+  #panel .sum { padding: 8px 20px; font-size: 12px; color: var(--muted); display: flex; gap: 8px; justify-content: space-between; border-bottom: 1px solid var(--line); }
+  #panel .list { overflow-y: auto; }
+  #panel.min .list, #panel.min .sum { display: none; }
+  .tr { display: flex; align-items: center; gap: 12px; padding: 10px 16px 10px 20px; }
+  .tr:hover { background: var(--hover); }
+  .tr .grow { flex: 1; min-width: 0; }
+  .tr .t { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .tr .d { font-size: 12px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ring { width: 28px; height: 28px; flex: none; }
+  .ring circle { fill: none; stroke-width: 3; }
+  .ring .bg { stroke: var(--accent-soft); }
+  .ring .fg { stroke: var(--accent); stroke-linecap: round; transform: rotate(-90deg); transform-origin: 50% 50%; transition: stroke-dashoffset .4s; }
+  .ring.wait .fg { stroke: var(--warn); }
+  .done-ic { color: var(--ok); width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; flex: none; }
+  .fail-ic { color: var(--bad); width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; flex: none; }
+
+  /* menus & dialogs */
+  .menu { position: fixed; z-index: 50; background: var(--surface); box-shadow: var(--shadow); border-radius: 8px; padding: 8px 0; min-width: 220px; }
+  .menu button { display: flex; align-items: center; gap: 14px; width: 100%; padding: 8px 20px; text-align: left; }
+  .menu button:hover { background: var(--hover); }
+  .menu hr { border: 0; border-top: 1px solid var(--line); margin: 8px 0; }
+  .menu .danger { color: var(--bad); }
+  dialog { border: 0; border-radius: 28px; padding: 24px; background: var(--surface); color: var(--text); width: min(440px, calc(100vw - 32px)); box-shadow: var(--shadow); }
+  dialog::backdrop { background: rgba(0,0,0,.4); }
+  dialog h3 { margin: 0 0 16px; font-size: 22px; font-weight: 400; }
+  dialog .acts { display: flex; justify-content: flex-end; gap: 8px; margin-top: 24px; }
+  dialog input.field { width: 100%; font: inherit; font-size: 16px; padding: 12px 14px; border: 1px solid var(--faint); border-radius: 6px; background: var(--surface); color: var(--text); outline: none; }
+  dialog input.field:focus { border: 2px solid var(--accent); padding: 11px 13px; }
+  #hist { width: min(560px, calc(100vw - 32px)); }
+  #hist table { width: 100%; border-collapse: collapse; }
+  #hist td { padding: 8px 6px; border-top: 1px solid var(--line); }
+  #details { width: min(560px, calc(100vw - 32px)); }
+  #details h3 { display: flex; align-items: center; gap: 12px; word-break: break-all; }
+  #details .meta { font-size: 13px; color: var(--muted); margin: -8px 0 12px; }
+  #details h4 { font-size: 13px; font-weight: 500; color: var(--muted); margin: 18px 0 6px; text-transform: uppercase; letter-spacing: .04em; }
+  #details .drow { display: flex; gap: 12px; align-items: flex-start; padding: 8px 0; border-top: 1px solid var(--line); }
+  #details h4 + .drow { border-top: 0; }
+  #details .drow > .i { flex: none; margin-top: 2px; color: var(--muted); }
+  #details .drow.ok > .i { color: var(--ok); }
+  #details .drow.busy > .i { color: var(--accent); }
+  #details .drow.wait > .i { color: var(--warn); }
+  #details .drow.bad > .i { color: var(--bad); }
+  #details .dname { font-weight: 500; display: flex; align-items: center; gap: 6px; }
+  #details .dname .i { width: 16px; height: 16px; color: var(--muted); }
+  #details .dtext { font-size: 14px; }
+  #details .dsub { font-size: 12px; color: var(--muted); }
+  #details .bar { max-width: none; }
+  #details .act { font-size: 13px; padding: 4px 0; display: flex; gap: 12px; }
+  #details .act time { color: var(--muted); flex: none; min-width: 72px; }
+  .st .state { cursor: pointer; }
+  #toast { position: fixed; inset: auto auto 24px 24px; margin: 0; border: 0; left: 24px; bottom: 24px; background: #303030; color: #f2f2f2; padding: 14px 20px; border-radius: 8px; font-size: 14px; opacity: 0; transform: translateY(8px); transition: .2s; pointer-events: none; z-index: 60; max-width: calc(100vw - 48px); }
+  #toast.show { opacity: 1; transform: none; }
+  #scrim { position: fixed; inset: 0; background: rgba(0,0,0,.35); z-index: 30; }
+  #fab { display: none; }
+
+  /* setup */
+  #setupView { min-height: 100vh; display: flex; align-items: flex-start; justify-content: center; padding: 48px 16px; }
+  #setupView .box { width: 100%; max-width: 480px; background: var(--surface); border-radius: 28px; padding: 32px; border: 1px solid var(--line); }
+  #setupView .brand { width: auto; padding: 0; margin-bottom: 16px; }
+  #setupView h2 { margin: 0 0 4px; font-size: 24px; font-weight: 400; }
+  #setupView label { display: block; font-size: 12px; color: var(--muted); margin: 16px 0 4px; }
+  #setupView input, #setupView textarea { width: 100%; font: inherit; font-size: 15px; padding: 12px; border: 1px solid var(--faint); border-radius: 6px; background: var(--surface); color: var(--text); outline: none; }
+  #setupView input:focus, #setupView textarea:focus { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+  #setupView textarea { resize: vertical; min-height: 64px; font-family: ui-monospace, monospace; font-size: 13px; }
+  .tabs { display: flex; border: 1px solid var(--faint); border-radius: 99px; overflow: hidden; margin: 20px 0 4px; }
+  .tabs button { flex: 1; padding: 10px; font-weight: 500; }
+  .tabs button.on { background: var(--accent-soft); }
+  #scanner { padding: 16px; }
+  #scanner video { width: 100%; border-radius: 16px; background: #000; display: block; }
+
+  /* tablets and unfolded foldables: the name column keeps the room */
+  @media (min-width: 801px) and (max-width: 1200px) {
+    #app { grid-template-columns: 224px 1fr; }
+    .cols, .row { grid-template-columns: minmax(0, 1fr) 116px 84px 48px; }
+    .cols > :nth-child(3), .row > :nth-child(3) { display: none; }
+    #syncChip { max-width: 260px; }
+    #syncChip #statetext { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  }
+  @media (min-width: 801px) and (max-width: 1000px) {
+    .cols { display: none; }
+    .row { grid-template-columns: minmax(0, 1fr) 48px; min-height: 60px; }
+    .row .cell { display: none; }
+    .fname .t .st { display: none; }
+    .fname .sub { display: flex; gap: 6px; align-items: center; font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; }
+    .grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
+  }
+
+  /* ---- motion ---- */
+  .btn, .iconbtn, .nav, .row, .card, .tr, .fs-row, .sel-row, .crumbs a, .menu button, #syncChip, #newBtn { transition: background-color .15s, filter .15s; }
+  /* Touch screens have no hover: show the press instead. */
+  .btn:active, .iconbtn:active, .nav:active, .row:not(.sel):active, .card:not(.sel):active, .tr:active, .fs-row:active, .sel-row:active, .crumbs a:active, .menu button:active, #syncChip:active, #newBtn:active { background-color: var(--press); }
+  .btn.primary:active { background-color: var(--accent); filter: brightness(.9); }
+  #fab { transition: bottom .2s, transform .1s; } #fab:active { transform: scale(.94); }
+  .spin { animation: spin 1.2s linear infinite; }
+  .fname .sub .st:empty { display: none; }
+  dialog[open] { animation: dlg-in .2s cubic-bezier(.2, 0, 0, 1); }
+  dialog[open]::backdrop { animation: fade-in .2s ease-out; }
+  .menu { animation: menu-in .12s ease-out; transform-origin: top center; }
+  #scrim:not([hidden]) { animation: fade-in .2s ease-out; }
+  #panel:not([hidden]) { animation: panel-in .2s cubic-bezier(.2, 0, 0, 1); }
+  #toast.show { animation: toast-in .2s ease-out; }
+  @keyframes dlg-in { from { opacity: 0; transform: scale(.94); } }
+  @keyframes menu-in { from { opacity: 0; transform: scale(.96) translateY(-4px); } }
+  @keyframes panel-in { from { transform: translateY(24px); opacity: 0; } }
+  @keyframes toast-in { from { opacity: 0; transform: translateY(8px); } }
+  @keyframes fade-in { from { opacity: 0; } }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after, ::backdrop { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+  }
+
+  /* phones */
+  @media (max-width: 800px) {
+    #app { grid-template-columns: minmax(0, 1fr); grid-template-rows: 64px 1fr; }
+    #topbar { padding: 8px 8px; }
+    #menuBtn { display: inline-flex; }
+    .brand { display: none; }
+    .search { height: 48px; }
+    #syncChip { padding: 6px; margin-left: 0; }
+    #syncChip #statetext { display: none; }
+    #sidebar { position: fixed; top: 0; bottom: 0; left: 0; width: 290px; max-width: 85vw; background: var(--surface); z-index: 40; padding-top: 16px; transform: translateX(-100%); transition: transform .2s; box-shadow: var(--shadow); }
+    #sidebar.open { transform: none; }
+    #sidebar .brand { display: flex; margin: 0 0 12px 12px; }
+    .fname .t .st { display: none; }
+    #newBtn { display: none; }
+    #content { border-radius: 16px 16px 0 0; }
+    .head { padding: 8px 8px 4px 16px; min-height: 52px; }
+    .crumbs { font-size: 18px; }
+    .scroll { padding: 0 0 120px; }
+    .cols { display: none; }
+    .row { grid-template-columns: minmax(0, 1fr) 48px; padding: 0 4px 0 16px; min-height: 64px; }
+    .row .cell { display: none; }
+    .fname .sub { display: flex; gap: 6px; align-items: center; font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; }
+    .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; padding: 8px 12px; }
+    #fab { display: flex; position: fixed; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom)); width: 56px; height: 56px; border-radius: 16px; background: var(--accent-soft); color: var(--text); box-shadow: var(--shadow); align-items: center; justify-content: center; z-index: 15; transition: bottom .2s; }
+    #fab svg { width: 24px; height: 24px; }
+    body.has-panel #fab { bottom: calc(72px + env(safe-area-inset-bottom)); }
+    #panel { left: 0; right: 0; width: auto; max-height: 55vh; padding-bottom: env(safe-area-inset-bottom); }
+    .page { padding: 8px 16px 120px; }
+    .kv { grid-template-columns: 1fr; gap: 0; }
+    .kv div:nth-child(even) { margin-bottom: 8px; }
+    .qr { width: 180px; height: 180px; }
+    #toast { left: 16px; right: 16px; bottom: 88px; max-width: none; }
+    #banner { margin: 4px 12px 0; }
+  }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-logo" viewBox="0 0 48 48"><path fill="#1a73e8" d="M24 6a14 14 0 0 1 13.5 10.4A10 10 0 0 1 36 36H13a11 11 0 0 1-1.6-21.9A14 14 0 0 1 24 6z"/><path fill="#fff" d="M24 15.5a8.5 8.5 0 0 1 8.3 6.7l2.2-1.2-1.2 6.6-6-3 2.2-1.2A5.5 5.5 0 0 0 19 24h-3a8.5 8.5 0 0 1 8-8.5zm-8 11.4 6 3-2.2 1.2A5.5 5.5 0 0 0 29.5 27h3a8.5 8.5 0 0 1-16.5 1.7l-2.2 1.2z"/></symbol>
+    <symbol id="i-menu" viewBox="0 0 24 24"><path d="M3 18h18v-2H3zm0-5h18v-2H3zm0-7v2h18V6z"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.47 6.47 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="M19 6.4 17.6 5 12 10.6 6.4 5 5 6.4 10.6 12 5 17.6 6.4 19l5.6-5.6 5.6 5.6 1.4-1.4-5.6-5.6z"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M20 13h-7v7h-2v-7H4v-2h7V4h2v7h7z"/></symbol>
+    <symbol id="i-recent" viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm0 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16zm.5-13H11v6l5.2 3.2.8-1.3-4.5-2.7z"/></symbol>
+    <symbol id="i-sync" viewBox="0 0 24 24"><path d="M12 4V1L8 5l4 4V6a6 6 0 0 1 5.2 9l1.5 1.5A8 8 0 0 0 12 4zm0 14a6 6 0 0 1-5.2-9L5.3 7.5A8 8 0 0 0 12 20v3l4-4-4-4z"/></symbol>
+    <symbol id="i-cloud-ok" viewBox="0 0 24 24"><path d="M19.4 10A7.5 7.5 0 0 0 5.4 8 6 6 0 0 0 6 20h13a5 5 0 0 0 .4-10zM10 17l-3.5-3.5 1.4-1.4L10 14.2 15.2 9l1.4 1.4z"/></symbol>
+    <symbol id="i-cloud-off" viewBox="0 0 24 24"><path d="M19.4 10A7.5 7.5 0 0 0 7.8 5.2l1.5 1.4A5.5 5.5 0 0 1 17.5 11v.5H19a3 3 0 0 1 1.5 5.6l1.5 1.4A5 5 0 0 0 19.4 10zM3 5.3l2.8 2.7A6 6 0 0 0 6 20h11.7l2 2 1.3-1.3L4.3 4zM7.7 10l8 8H6a4 4 0 0 1 0-8z"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm-2 15-5-5 1.4-1.4 3.6 3.6 7.6-7.6L19 8z"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm4.2 14.2L11 13V7h1.5v5.2l4.5 2.7z"/></symbol>
+    <symbol id="i-error" viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm1 15h-2v-2h2zm0-4h-2V7h2z"/></symbol>
+    <symbol id="i-down" viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7zM5 18v2h14v-2z"/></symbol>
+    <symbol id="i-up" viewBox="0 0 24 24"><path d="M9 16h6v-6h4l-7-7-7 7h4zm-4 2h14v2H5z"/></symbol>
+    <symbol id="i-more" viewBox="0 0 24 24"><path d="M12 8a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm0 2a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm0 6a2 2 0 1 0 0 4 2 2 0 0 0 0-4z"/></symbol>
+    <symbol id="i-list" viewBox="0 0 24 24"><path d="M3 13h2v-2H3zm0 4h2v-2H3zm0-8h2V7H3zm4 4h14v-2H7zm0 4h14v-2H7zM7 7v2h14V7z"/></symbol>
+    <symbol id="i-grid" viewBox="0 0 24 24"><path d="M4 11h5V5H4zm0 7h5v-6H4zm6 0h5v-6h-5zm6 0h5v-6h-5zm-6-7h5V5h-5zm6-6v6h5V5z"/></symbol>
+    <symbol id="i-chev" viewBox="0 0 24 24"><path d="M10 6 8.6 7.4 13.2 12l-4.6 4.6L10 18l6-6z"/></symbol>
+    <symbol id="i-expand" viewBox="0 0 24 24"><path d="M7.4 15.4 12 10.8l4.6 4.6L18 14l-6-6-6 6z"/></symbol>
+    <symbol id="i-collapse" viewBox="0 0 24 24"><path d="M16.6 8.6 12 13.2 7.4 8.6 6 10l6 6 6-6z"/></symbol>
+    <symbol id="i-open" viewBox="0 0 24 24"><path d="M19 19H5V5h7V3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7h-2zM14 3v2h3.6l-9.8 9.8 1.4 1.4L19 6.4V10h2V3z"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24"><path d="M19 12v7H5v-7H3v7a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7zm-6 .7 2.6-2.6 1.4 1.4-5 5-5-5 1.4-1.4 2.6 2.6V3h2z"/></symbol>
+    <symbol id="i-edit" viewBox="0 0 24 24"><path d="M3 17.2V21h3.8L17.8 9.9l-3.7-3.7zM20.7 7a1 1 0 0 0 0-1.4l-2.3-2.3a1 1 0 0 0-1.4 0l-1.8 1.8 3.7 3.7z"/></symbol>
+    <symbol id="i-info" viewBox="0 0 24 24"><path d="M11 7h2v2h-2zm0 4h2v6h-2zm1-9a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm0 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16z"/></symbol>
+    <symbol id="i-history" viewBox="0 0 24 24"><path d="M13 3a9 9 0 0 0-9 9H1l3.9 3.9L9 12H6a7 7 0 1 1 2 4.9l-1.4 1.4A9 9 0 1 0 13 3zm-1 5v5l4.3 2.5.7-1.2-3.5-2.1V8z"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24"><path d="M6 19a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V7H6zM19 4h-3.5l-1-1h-5l-1 1H5v2h14z"/></symbol>
+    <symbol id="i-newfolder" viewBox="0 0 24 24"><path d="M20 6h-8l-2-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2zm-1 8h-3v3h-2v-3h-3v-2h3V9h2v3h3z"/></symbol>
+    <symbol id="i-upfile" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zm4 18H6V4h7v5h5zM8 15h2.5v3h3v-3H16l-4-4z"/></symbol>
+    <symbol id="i-upfolder" viewBox="0 0 24 24"><path d="M20 6h-8l-2-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2zm0 12H4V8h16zM8 13h2.5v3h3v-3H16l-4-4z"/></symbol>
+    <symbol id="i-phone" viewBox="0 0 24 24"><path d="M16 1H8a2.5 2.5 0 0 0-2.5 2.5v17A2.5 2.5 0 0 0 8 23h8a2.5 2.5 0 0 0 2.5-2.5v-17A2.5 2.5 0 0 0 16 1zm-4 21a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm4.5-4h-9V4h9z"/></symbol>
+    <symbol id="i-laptop" viewBox="0 0 24 24"><path d="M20 18a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2H0v2h24v-2zM4 6h16v10H4z"/></symbol>
+    <symbol id="i-qr" viewBox="0 0 24 24"><path d="M3 11h8V3H3zm2-6h4v4H5zM3 21h8v-8H3zm2-6h4v4H5zm8-12v8h8V3zm6 6h-4V5h4zm0 10h2v2h-2zm-6-6h2v2h-2zm2 2h2v2h-2zm-2 2h2v2h-2zm2 2h2v2h-2zm2-2h2v2h-2zm0-4h2v2h-2zm2 2h2v2h-2z"/></symbol>
+    <symbol id="i-tick" viewBox="0 0 24 24"><path d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/></symbol>
+    <symbol id="i-selectall" viewBox="0 0 24 24"><path d="M3 5h2V3a2 2 0 0 0-2 2zm0 8h2v-2H3zm4 8h2v-2H7zM3 9h2V7H3zm10-6h-2v2h2zm6 0v2h2a2 2 0 0 0-2-2zM5 21v-2H3a2 2 0 0 0 2 2zm-2-4h2v-2H3zM9 3H7v2h2zm2 18h2v-2h-2zm8-8h2v-2h-2zm0 8a2 2 0 0 0 2-2h-2zm0-12h2V7h-2zm0 8h2v-2h-2zm-4 4h2v-2h-2zm0-16h2V3h-2zM7 17h10V7H7zm2-8h6v6H9z"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 24 24"><path d="M16 1H4a2 2 0 0 0-2 2v14h2V3h12zm3 4H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zm0 16H8V7h11z"/></symbol>
+    <symbol id="f-folder" viewBox="0 0 24 24"><path d="M10 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-8z"/></symbol>
+    <symbol id="f-image" viewBox="0 0 24 24"><path d="M21 19V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2zM8.5 13.5l2.5 3 3.5-4.5 4.5 6H5z"/></symbol>
+    <symbol id="f-video" viewBox="0 0 24 24"><path d="M19 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2zM9 16.5v-9l7 4.5z"/></symbol>
+    <symbol id="f-audio" viewBox="0 0 24 24"><path d="M19 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2zm-2 5h-3v5.5a2.5 2.5 0 1 1-2-2.45V6h5z"/></symbol>
+    <symbol id="f-pdf" viewBox="0 0 24 24"><path d="M19 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2zM9.5 11.5c0 .8-.7 1.5-1.5 1.5H7v2H5.5V9H8c.8 0 1.5.7 1.5 1.5zm5 2c0 .8-.7 1.5-1.5 1.5h-2.5V9H13c.8 0 1.5.7 1.5 1.5zm4-3H17v1h1.5V13H17v2h-1.5V9h3zM7 10.5h1v1H7zm4.5 0h1v3h-1z"/></symbol>
+    <symbol id="f-doc" viewBox="0 0 24 24"><path d="M19 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2zm-2 14H7v-2h10zm0-4H7v-2h10zm0-4H7V7h10z"/></symbol>
+    <symbol id="f-sheet" viewBox="0 0 24 24"><path d="M19 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2zM6 7h5v2.5H6zm7 0h5v2.5h-5zm-7 4.5h5V14H6zm7 0h5V14h-5zM6 16h5v2H6zm7 0h5v2h-5z"/></symbol>
+    <symbol id="f-slide" viewBox="0 0 24 24"><path d="M19 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2zm0 13H5V8h14z"/></symbol>
+    <symbol id="f-zip" viewBox="0 0 24 24"><path d="M20 6h-8l-2-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2zm-2 6h-2v2h2v2h-2v2h-2v-2h2v-2h-2v-2h2v-2h-2V8h2v2h2z"/></symbol>
+    <symbol id="f-code" viewBox="0 0 24 24"><path d="M19 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2zM9.6 15.6 6 12l3.6-3.6L11 9.8 8.8 12l2.2 2.2zm4.8 0L13 14.2l2.2-2.2L13 9.8l1.4-1.4L18 12z"/></symbol>
+    <symbol id="f-file" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zm-1 7V3.5L18.5 9z"/></symbol>
+    <symbol id="i-drive" viewBox="0 0 24 24"><path d="M20 6h-8l-2-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2zm-5 3a2 2 0 1 1 0 4 2 2 0 0 1 0-4zm4 8h-8v-1c0-1.33 2.67-2 4-2s4 .67 4 2z"/></symbol>
+    <symbol id="i-people" viewBox="0 0 24 24"><path d="M16 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-8 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0 2c-2.3 0-7 1.2-7 3.5V19h14v-2.5C15 14.2 10.3 13 8 13zm8 0h-1c1.2.9 2 2 2 3.5V19h6v-2.5c0-2.3-4.7-3.5-7-3.5z"/></symbol>
+    <symbol id="i-cloud" viewBox="0 0 24 24"><path d="M19.4 10A7.5 7.5 0 0 0 5.4 8 6 6 0 0 0 6 20h13a5 5 0 0 0 .4-10zM19 18H6a4 4 0 0 1-.4-8h.7l.6-1.2a5.5 5.5 0 0 1 10.3 1.7l.3 1.5H19a3 3 0 0 1 0 6z"/></symbol>
+    <symbol id="i-offline-pin" viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm5 16H7v-2h10zm-6.7-3L7 11.7l1.4-1.4 1.9 1.9 5.3-5.3L17 8.3z"/></symbol>
+    <symbol id="i-tune" viewBox="0 0 24 24"><path d="M3 17v2h6v-2zM3 5v2h10V5zm10 16v-2h8v-2h-8v-2h-2v6zM7 9v2H3v2h4v2h2V9zm14 4v-2H11v2zm-6-4h2V7h4V5h-4V3h-2z"/></symbol>
+    <symbol id="i-logout" viewBox="0 0 24 24"><path d="m17 7-1.4 1.4 2.6 2.6H8v2h10.2l-2.6 2.6L17 17l5-5zM4 5h8V3H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h8v-2H4z"/></symbol>
+    <symbol id="i-empty" viewBox="0 0 24 24"><path d="M20 6h-8l-2-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2z"/></symbol>
+  </defs>
+</svg>
+
+<div id="setupView" hidden>
+  <div class="box">
+    <div class="brand"><svg><use href="#i-logo"/></svg><span>Syncker</span></div>
+    <h2>Set up this device</h2>
+    <p class="small">Create a shared drive for your files, or join one from another device with its invite.</p>
+    <div class="tabs">
+      <button id="tabCreate" class="on" onclick="setMode('create')">New shared drive</button>
+      <button id="tabJoin" onclick="setMode('join')">Join with invite</button>
+    </div>
+    <div id="joinFields" hidden>
+      <label for="inviteIn">Invite from your other device</label>
+      <textarea id="inviteIn" placeholder="syncker:…" autocapitalize="off" autocomplete="off" spellcheck="false"></textarea>
+      <div style="margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button class="btn" onclick="startScan()"><svg class="i"><use href="#i-qr"/></svg>Scan QR code</button><span class="small">shown on your other device</span></div>
+    </div>
+    <div id="driveField"><label for="driveIn">Shared drive name</label>
+    <input id="driveIn" autocomplete="off" value="My drive"></div>
+    <label for="nameIn">Device name</label>
+    <input id="nameIn" autocomplete="off">
+    <label for="folderIn">Folder to sync</label>
+    <input id="folderIn" autocapitalize="off" autocomplete="off" spellcheck="false">
+    <div style="margin-top:24px;text-align:right"><button class="btn primary" id="setupBtn" onclick="doSetup()">Create shared drive</button></div>
+  </div>
+</div>
+
+<div id="mainView" hidden>
+<div id="app">
+  <header id="topbar">
+    <button class="iconbtn" id="menuBtn" onclick="drawer(true)" aria-label="Menu"><svg class="i"><use href="#i-menu"/></svg></button>
+    <div class="brand"><svg><use href="#i-logo"/></svg><span>Syncker</span></div>
+    <label class="search">
+      <span class="iconbtn" style="width:36px;height:36px"><svg class="i"><use href="#i-search"/></svg></span>
+      <input id="searchIn" type="search" placeholder="Search in Syncker" autocomplete="off" spellcheck="false">
+      <button class="iconbtn" id="searchClear" hidden onclick="clearSearch()" aria-label="Clear search" style="width:36px;height:36px"><svg class="i"><use href="#i-close"/></svg></button>
+    </label>
+    <div id="syncChip" onclick="openPanel()" title="Sync status"><svg class="i" id="syncIcon"><use href="#i-cloud-ok"/></svg><span id="statetext">Connecting…</span></div>
+  </header>
+
+  <nav id="sidebar">
+    <div class="brand"><svg><use href="#i-logo"/></svg><span>Syncker</span></div>
+    <button id="newBtn" onclick="newMenu(this)"><span style="display:inline-flex;align-items:center;gap:12px"><svg class="i" style="width:24px;height:24px"><use href="#i-plus"/></svg>New</span></button>
+    <a class="nav" data-view="recent" onclick="showView('recent')"><svg class="i"><use href="#i-recent"/></svg>Recent</a>
+    <div class="navhead">Shared drives</div>
+    <div id="drives"></div>
+    <a class="nav sub" onclick="addDrive('create')"><svg class="i"><use href="#i-plus"/></svg>New shared drive</a>
+    <a class="nav sub" onclick="addDrive('join')"><svg class="i"><use href="#i-qr"/></svg>Join with invite</a>
+    <a class="nav sub" id="camNav" onclick="askCamera()" hidden><svg class="i"><use href="#f-image"/></svg>Back up photos</a>
+    <div class="storage">
+      <div><b id="totFiles">0 files</b></div>
+      <div class="small" id="totBytes"></div>
+      <div class="small" id="device" style="margin-top:8px"></div>
+    </div>
+  </nav>
+
+  <main id="content">
+    <div class="head">
+      <div id="selbar" role="toolbar" aria-label="Selection"></div>
+      <div class="crumbs" id="crumbs"></div>
+      <button class="btn" id="manageBtn" onclick="showView('devices')" title="Devices, invite and sync settings"><svg class="i"><use href="#i-people"/></svg><span class="hide-sm">Manage</span></button>
+      <div class="viewtoggle" id="viewToggle">
+        <button id="vList" onclick="setLayout('list')" aria-label="List view"><svg class="i"><use href="#i-list"/></svg></button>
+        <button id="vGrid" onclick="setLayout('grid')" aria-label="Grid view"><svg class="i"><use href="#i-grid"/></svg></button>
+      </div>
+    </div>
+    <div id="banner" hidden></div>
+    <div class="scroll" id="scroller">
+      <div id="filesWrap">
+        <div class="cols" id="cols"></div>
+        <div id="files"></div>
+      </div>
+      <div id="devicesPage" class="page" hidden>
+        <h3 style="margin-top:8px">Devices in this drive</h3>
+        <div id="peers"></div>
+        <h3>Add a device</h3>
+        <div class="invitebox">
+          <img class="qr" id="qr" alt="Invite QR code">
+          <div class="grow">
+            <div id="inviteHelp">On your phone, scan this code with the camera, or open Syncker, choose <b>Join with invite</b>, then <b>Scan QR code</b>.</div>
+            <code class="invite" id="invite"></code>
+            <button class="btn" onclick="copyInvite()"><svg class="i"><use href="#i-copy"/></svg>Copy invite</button>
+            <p class="small">Each invite is one shared drive. Anyone with it can read and change every file in this drive, and nothing else.</p>
+          </div>
+        </div>
+        <h3>On this device</h3>
+        <div class="kv">
+          <div>Stored here</div><div id="selSummary"></div>
+          <div>Folder</div><div id="folder"></div>
+          <div>Copies</div><div id="storeMode"></div>
+          <div id="ignoreKey" hidden>Not synced</div><div id="ignoreList" hidden></div>
+          <div>Last sync</div><div id="lastsync"></div>
+          <div>Network</div><div id="netinfo"></div>
+        </div>
+        <div class="danger-zone" style="margin-top:16px">
+          <button class="btn" onclick="chooseSync()"><svg class="i"><use href="#i-tune"/></svg>Choose what to sync</button>
+          <button class="btn" onclick="syncNow()"><svg class="i"><use href="#i-sync"/></svg>Sync now</button>
+        </div>
+        <label class="sel-row" style="margin-top:12px;padding-left:0"><input type="checkbox" id="allowRemote"><span class="grow" style="white-space:normal">Allow other devices in this drive to choose what this device syncs</span></label>
+        <div id="failedBox" hidden>
+          <h3>Couldn't sync</h3>
+          <div id="failed" class="small failed"></div>
+        </div>
+        <h3>Drive</h3>
+        <div class="danger-zone">
+          <button class="btn" onclick="renameDrive()"><svg class="i"><use href="#i-edit"/></svg>Rename</button>
+          <button class="btn danger" onclick="leaveDrive()"><svg class="i"><use href="#i-logout"/></svg>Leave on this device</button>
+        </div>
+        <p class="small">Leaving stops syncing this drive here. Files already in its folder stay, and other devices keep the drive.</p>
+      </div>
+    </div>
+    <div id="dropOverlay" hidden><div id="dropText">Drop files to upload</div></div>
+  </main>
+</div>
+
+<button id="fab" onclick="newMenu(this)" aria-label="New"><svg class="i"><use href="#i-plus"/></svg></button>
+
+<section id="panel" hidden>
+  <div class="ph">
+    <div class="ttl" id="panelTitle"></div>
+    <button class="iconbtn" id="panelMin" onclick="togglePanel()" aria-label="Minimize"><svg class="i"><use href="#i-collapse"/></svg></button>
+    <button class="iconbtn" onclick="closePanel()" aria-label="Close"><svg class="i"><use href="#i-close"/></svg></button>
+  </div>
+  <div class="sum" id="panelSum"></div>
+  <div class="list" id="panelList"></div>
+</section>
+</div>
+
+<div id="scrim" hidden onclick="drawer(false)"></div>
+<input type="file" id="upload" multiple hidden>
+<input type="file" id="uploadDir" webkitdirectory multiple hidden>
+
+<dialog id="ask"><h3 id="askTitle"></h3><p id="askText" class="small" style="margin:0 0 8px;font-size:14px"></p><input class="field" id="askIn" autocomplete="off" spellcheck="false">
+  <div class="acts"><button class="btn text" id="askCancel">Cancel</button><button class="btn text" id="askOk">OK</button></div></dialog>
+<dialog id="camDlg"><h3>Back up your photos?</h3>
+  <p class="small" style="margin:0 0 8px;font-size:14px">Every photo and video you take with this phone's camera will sync to your other devices, like a photo backup.</p>
+  <ul class="small cam-points">
+    <li>From <b id="camFolder"></b> <button class="btn text inline" id="camChange" type="button">Change</button></li>
+    <li>They stay where they are: no extra space is used on this phone.</li>
+    <li>Your other devices get them once they join the new drive <b id="camName"></b> with its invite.</li>
+    <li>Deleting a photo on one device deletes it on the others too.</li>
+  </ul>
+  <div class="acts"><button class="btn text" id="camNo">Not now</button><button class="btn text" id="camYes">Back up photos</button></div></dialog>
+<dialog id="driveDlg"><h3 id="ddTitle"></h3>
+  <div id="ddJoin"><label for="ddInvite">Invite from another device</label><textarea id="ddInvite" placeholder="syncker:…" autocapitalize="off" autocomplete="off" spellcheck="false"></textarea>
+    <button class="btn text" style="margin-top:4px" onclick="startScan('ddInvite')"><svg class="i"><use href="#i-qr"/></svg>Scan QR code</button></div>
+  <label for="ddName">Name</label><input class="field" id="ddName" autocomplete="off">
+  <label for="ddFolder">Folder on this device</label><div class="folder-field"><input class="field" id="ddFolder" autocapitalize="off" autocomplete="off" spellcheck="false"><button class="btn" id="ddBrowse" type="button">Browse…</button></div>
+  <div class="acts"><button class="btn text" onclick="document.getElementById('driveDlg').close()">Cancel</button><button class="btn text" id="ddOk"></button></div></dialog>
+<dialog id="selDlg"><h3 id="selTitle">Choose what to sync</h3><p class="small" id="selLock" style="margin:0 0 8px;color:var(--bad)" hidden></p><p class="small" id="selHelp" style="margin:0"></p>
+  <div class="sel-list" id="selList"></div>
+  <p class="small" id="selSummaryLine" style="margin:8px 0 0"></p>
+  <div id="selOpts" hidden>
+    <label class="sel-opt"><input type="checkbox" id="selIgnore"><span>Skip build and dependency folders (node_modules, .git, build, caches…)</span></label>
+    <label class="sel-opt"><input type="checkbox" id="selCopies"><span>Keep a copy of every version in the sync data (needs as much space again; old versions stay downloadable)</span></label>
+  </div>
+  <div class="acts"><form method="dialog"><button class="btn text" id="selDone">Done</button></form><button class="btn primary" id="selStart" hidden>Start syncing</button></div></dialog>
+<dialog id="fsDlg"><h3>Choose a folder</h3><p class="small" id="fsPath"></p>
+  <div class="sel-list" id="fsList"></div>
+  <div class="acts"><button class="btn text" id="fsNew" style="margin-right:auto">New folder</button><button class="btn text" id="fsCancel">Cancel</button><button class="btn primary" id="fsUse">Use this folder</button></div></dialog>
+<dialog id="details"><h3 id="detTitle"></h3><div class="meta" id="detMeta"></div><div id="detBody"></div><div class="acts"><form method="dialog"><button class="btn text">Close</button></form></div></dialog>
+<dialog id="hist"><h3 id="histTitle"></h3><div id="histBody"></div><div class="acts"><form method="dialog"><button class="btn text">Close</button></form></div></dialog>
+<input type="file" id="scanPhoto" accept="image/*" capture="environment" hidden>
+<dialog id="scanner"><video id="scanVideo" playsinline muted></video><canvas id="scanCanvas" hidden></canvas>
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px"><span class="small">Point the camera at the QR code</span><button class="btn text" onclick="stopScan()">Cancel</button></div></dialog>
+<div id="toast" popover="manual"></div>
+
+<script>
+let dir = '/'
+let space = null // current shared drive id
+let view = 'files' // files | recent | search | devices (the drive's manage page)
+let status = null
+let mode = 'create'
+let items = []
+let shown = []
+let query = ''
+let sort = { key: 'name', asc: true }
+let layout = 'list'
+let panelClosed = false
+const uploads = new Map() // browser uploads in flight: id -> { path, space, size, bytes, state, finished }
+
+const $ = (id) => document.getElementById(id)
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]))
+const q = (o) => new URLSearchParams(o).toString()
+const ico = (id, cls = 'i') => `<svg class="${cls}"><use href="#${id}"/></svg>`
+const join = (d, name) => (d === '/' ? '' : d) + '/' + name
+const parent = (p) => p.split('/').slice(0, -1).join('/') || '/'
+const isAndroid = () => status && status.platform === 'android'
+const drives = () => (status && status.spaces) || []
+const cur = () => drives().find((d) => d.id === space) || null
+const driveName = (id) => (drives().find((d) => d.id === id) || {}).name || ''
+try { layout = localStorage.getItem('layout') || 'list' } catch {}
+try { const s = JSON.parse(localStorage.getItem('sort')); if (s && s.key) sort = s } catch {}
+
+function toast (msg) {
+  const t = $('toast'); t.textContent = msg; t.classList.add('show')
+  // A popover is shown above open dialogs (re-shown: on top of one opened since).
+  try { if (t.matches(':popover-open')) t.hidePopover(); t.showPopover() } catch {}
+  clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('show'), 3000)
+}
+
+async function api (url, opts) {
+  const res = await fetch(url, opts)
+  if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || res.statusText)
+  return res.json()
+}
+const post = (url, body) => api(url, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body || {}) })
+
+function size (n) {
+  if (n == null) return ''
+  const u = ['B', 'KB', 'MB', 'GB', 'TB']; let i = 0
+  while (n >= 1024 && i < u.length - 1) { n /= 1024; i++ }
+  return (i ? n.toFixed(n < 10 ? 1 : 0) : n) + ' ' + u[i]
+}
+function when (t) {
+  if (!t) return ''
+  const d = new Date(t); const now = new Date()
+  if (d.toDateString() === now.toDateString()) return d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
+  return d.toLocaleDateString([], { month: 'short', day: 'numeric', year: d.getFullYear() === now.getFullYear() ? undefined : 'numeric' })
+}
+function ago (t) {
+  const s = Math.round((Date.now() - t) / 1000)
+  if (s < 60) return 'just now'
+  if (s < 3600) return Math.round(s / 60) + ' min ago'
+  if (s < 86400) return Math.round(s / 3600) + ' h ago'
+  return when(t)
+}
+function eta (s) {
+  if (s == null) return ''
+  if (s < 60) return s + ' s left'
+  if (s < 3600) return Math.round(s / 60) + ' min left'
+  return Math.round(s / 3600) + ' h left'
+}
+
+const EXT = {
+  image: ['png', 'jpg', 'jpeg', 'gif', 'webp', 'heic', 'heif', 'bmp', 'svg', 'avif'],
+  video: ['mp4', 'mov', 'mkv', 'webm', 'avi', '3gp', 'm4v'],
+  audio: ['mp3', 'wav', 'flac', 'ogg', 'm4a', 'aac', 'opus'],
+  pdf: ['pdf'],
+  doc: ['doc', 'docx', 'odt', 'txt', 'md', 'rtf'],
+  sheet: ['xls', 'xlsx', 'ods', 'csv'],
+  slide: ['ppt', 'pptx', 'odp', 'key'],
+  zip: ['zip', 'tar', 'gz', '7z', 'rar', 'xz', 'bz2', 'apk'],
+  code: ['js', 'ts', 'py', 'json', 'html', 'css', 'sh', 'c', 'cpp', 'h', 'rs', 'go', 'java', 'kt', 'xml', 'yml', 'yaml']
+}
+function kind (it) {
+  if (it.dir) return 'folder'
+  const ext = it.name.includes('.') ? it.name.split('.').pop().toLowerCase() : ''
+  for (const k in EXT) if (EXT[k].includes(ext)) return k
+  return 'file'
+}
+const ficon = (it) => { const k = kind(it); return `<span class="ficon" style="color:var(--i-${k})">${ico('f-' + k, '')}</span>` }
+const itemSpace = (it) => it.space || space
+
+// ---- transfers: every drive's engine (down/up/add) + uploads from this browser ----
+
+function transfers () {
+  const local = [...uploads.values()].map((u) => ({ ...u, dir: 'browser', percent: u.state === 'done' ? 100 : Math.floor(u.bytes * 100 / (u.size || 1)) }))
+  return [...local, ...drives().flatMap((d) => (d.transfers || []).map((t) => ({ ...t, space: d.id })))]
+}
+const moving = (t) => t.state === 'active' || t.state === 'saving' || t.state === 'waiting'
+
+// The transfer that best describes a path right now (download beats send).
+function transferFor (p, sp) {
+  let best = null
+  for (const t of transfers()) {
+    if (t.path !== p || t.space !== sp || t.state === 'done') continue
+    if (!best || (t.dir === 'down' && best.dir !== 'down')) best = t
+  }
+  return best
+}
+
+function stateHtml (it) {
+  const sp = itemSpace(it)
+  if (it.dir) {
+    const pre = it.path + '/'
+    const n = transfers().filter((t) => moving(t) && t.space === sp && t.path && t.path.startsWith(pre)).length
+    if (n) return `<span class="state busy">${ico('i-sync', 'i spin')}${n} syncing</span>`
+    if (it.online) return `<span class="state" title="Online only: not stored on this device">${ico('i-cloud')}Online only</span>`
+    return ''
+  }
+  const t = transferFor(it.path, sp)
+  if (t && t.dir === 'down') {
+    if (t.preparing != null) return `<span class="state wait" title="${esc(t.device)} is getting this file ready to send">${ico('i-clock')}Preparing ${t.preparing}%</span>`
+    if (t.state === 'waiting' || (!t.speed && !t.bytes)) return `<span class="state wait" title="Waiting for ${esc(t.device)}">${ico('i-clock')}${t.online === false ? 'Waiting for device' : 'Waiting…'}</span>`
+    if (t.state === 'saving') return `<span class="state busy">${ico('i-down')}Saving…</span>`
+    return `<span class="state busy">${ico('i-down')}${t.percent}%</span>`
+  }
+  if (it.pending) return `<span class="state wait">${ico('i-clock')}Waiting for device</span>`
+  if (t && t.state === 'active') return `<span class="state busy">${t.dir === 'add' ? ico('i-sync', 'i spin') : ico('i-up')}${t.dir === 'up' ? 'Sending ' : ''}${t.percent}%</span>`
+  if (it.online && !it.local) return `<span class="state" title="Online only: not stored on this device">${ico('i-cloud')}Online only</span>`
+  if (it.synced === false) return `<span class="state busy">${ico('i-sync', 'i spin')}Syncing…</span>`
+  const miss = it.copies && it.copies.missing
+  if (miss && miss.length) return `<span class="state wait" title="Not yet on: ${esc(miss.join(', '))}">${ico('i-up')}Not on ${miss.length === 1 ? esc(miss[0]) : miss.length + ' devices'} yet</span>`
+  return `<span class="state ok" title="On this device and synced">${ico('i-cloud-ok')}</span>`
+}
+
+function barHtml (it) {
+  const t = !it.dir && transferFor(it.path, itemSpace(it))
+  if (!t || t.state === 'done') return ''
+  if (t.state === 'waiting' || t.state === 'saving') return '<div class="bar indet"><i></i></div>'
+  return `<div class="bar"><i style="width:${t.percent}%"></i></div>`
+}
+
+// ---- navigation ----
+
+function setNav () {
+  for (const a of document.querySelectorAll('.nav[data-view]')) a.classList.toggle('on', a.dataset.view === view)
+  for (const a of document.querySelectorAll('.nav[data-drive]')) a.classList.toggle('on', (view === 'files' || view === 'devices') && a.dataset.drive === space)
+  const inDrive = view === 'files' && !!cur()
+  $('viewToggle').hidden = view === 'devices' || !drives().length
+  $('manageBtn').hidden = !inDrive
+  $('filesWrap').hidden = view === 'devices'
+  $('devicesPage').hidden = view !== 'devices'
+}
+
+function crumbs () {
+  const c = $('crumbs')
+  const d = cur()
+  if (view === 'recent') { c.innerHTML = '<a>Recent</a>'; return }
+  if (view === 'search') { c.innerHTML = `<a>Results for “${esc(query)}”</a>`; return }
+  if (!d) { c.innerHTML = '<a>Shared drives</a>'; return }
+  if (view === 'devices') {
+    c.innerHTML = `<a data-dir="/">${esc(d.name)}</a><span class="sep">${ico('i-chev')}</span><a>Manage</a>`
+  } else {
+    const parts = dir.split('/').filter(Boolean)
+    let html = `<a data-dir="/">${esc(d.name)}</a>`
+    let acc = ''
+    for (const p of parts) { acc += '/' + p; html += `<span class="sep">${ico('i-chev')}</span><a data-dir="${esc(acc)}">${esc(p)}</a>` }
+    c.innerHTML = html
+  }
+  for (const a of c.querySelectorAll('a[data-dir]')) a.onclick = () => go(a.dataset.dir)
+  c.scrollLeft = c.scrollWidth
+}
+
+function hash () {
+  if (view === 'recent') return '#recent'
+  if (view === 'devices') return '#' + q({ d: space || '', manage: 1 })
+  return '#' + q({ d: space || '', p: dir })
+}
+
+function showView (v) {
+  view = v
+  drawer(false)
+  closeMenu()
+  // The selection belongs to one folder or view: moving elsewhere clears it.
+  const where = [v, space, dir].join('\0')
+  if (where !== pickedWhere) { pickedWhere = where; picked.clear(); pickAnchor = null; renderSelbar() }
+  if (v !== 'search') { query = ''; $('searchIn').value = ''; $('searchClear').hidden = true }
+  history.replaceState(null, '', hash())
+  setNav()
+  crumbs()
+  if (v === 'devices') { if (status) renderDevices(); return }
+  load()
+}
+
+// go(path) in the current drive, or go(path, driveId)
+function go (d, sp) {
+  if (sp) space = sp
+  dir = d
+  showView('files')
+}
+
+function openDrive (id) { go('/', id) }
+
+let loadSeq = 0
+async function load () {
+  if (view === 'devices') return
+  crumbs()
+  const seq = ++loadSeq
+  let res
+  try {
+    if (view === 'files' && !cur()) res = { items: [] }
+    else {
+      res = view === 'recent' ? await api('/api/recent')
+        : view === 'search' ? await api('/api/search?' + q({ q: query }))
+          : await api('/api/list?' + q({ space, dir }))
+    }
+  } catch (err) { return toast(err.message) }
+  if (seq !== loadSeq) return
+  items = res.items
+  renderFiles()
+  openIfReady()
+}
+
+const byName = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' })
+function sorted () {
+  if (view === 'recent') return items
+  const k = sort.key; const dirn = sort.asc ? 1 : -1
+  return items.slice().sort((a, b) => (b.dir - a.dir) ||
+    (k === 'name' ? byName.compare(a.name, b.name)
+      : k === 'size' ? (a.size || 0) - (b.size || 0) : (a.mtime || 0) - (b.mtime || 0)) * dirn)
+}
+
+function setSort (key) {
+  sort = sort.key === key ? { key, asc: !sort.asc } : { key, asc: key === 'name' }
+  try { localStorage.setItem('sort', JSON.stringify(sort)) } catch {}
+  renderFiles()
+}
+
+function setLayout (l) {
+  layout = l
+  try { localStorage.setItem('layout', l) } catch {}
+  renderFiles()
+}
+
+// A drive just joined shows no files until its whole file list is here.
+function listingText (d) {
+  const l = d.listing || {}
+  if (!l.online) return 'Waiting for another device of this drive to come online.'
+  const pct = l.total ? Math.min(99, Math.floor(l.have / l.total * 100)) : 0
+  return `${pct}% · ${(l.files || 0).toLocaleString()} file${l.files === 1 ? '' : 's'} so far. Files show up once the whole list is here.`
+}
+
+function renderFiles () {
+  $('vList').classList.toggle('on', layout === 'list')
+  $('vGrid').classList.toggle('on', layout === 'grid')
+  const list = sorted()
+  shown = list
+  prunePicked()
+  renderSelbar()
+  const arrow = (k) => sort.key === k && view !== 'recent' ? `<span class="arrow">${sort.asc ? '↑' : '↓'}</span>` : ''
+  const third = view === 'files' ? 'Modified by' : 'Location'
+  $('cols').hidden = layout !== 'list' || !list.length
+  $('cols').innerHTML = `<span onclick="setSort('name')">Name ${arrow('name')}</span><span onclick="setSort('mtime')">Modified ${arrow('mtime')}</span><span>${third}</span><span onclick="setSort('size')">Size ${arrow('size')}</span><span></span>`
+  const tb = $('files')
+  if (moreObs) { moreObs.disconnect(); moreObs = null }
+  if (!list.length) {
+    tb.className = ''
+    if (view === 'files' && !drives().length) {
+      tb.innerHTML = `<div class="empty">${ico('i-drive', '')}<div class="big">No shared drives on this device</div><div>Create one, or join one with an invite from another device.</div>
+        <div style="display:flex;gap:8px;margin-top:8px"><button class="btn primary" onclick="addDrive('create')">New shared drive</button><button class="btn" onclick="addDrive('join')">Join with invite</button></div></div>`
+      return
+    }
+    if (view === 'files' && cur() && cur().listed === false) {
+      tb.innerHTML = `<div class="empty">${ico('i-clock', '')}<div class="big">Getting the list of files</div><div id="listingMsg">${listingText(cur())}</div></div>`
+      return
+    }
+    const msg = view === 'search' ? ['No results', 'Try a different name.']
+      : view === 'recent' ? ['No recent files', 'Files you add or change on any device show up here.']
+        : ['Nothing here yet', 'Drop files here, or use the New button.']
+    tb.innerHTML = `<div class="empty">${ico('i-empty', '')}<div class="big">${msg[0]}</div><div>${msg[1]}</div></div>`
+    return
+  }
+  const third3 = (it) => view === 'files' ? esc(it.device || '') : esc((it.spaceName || '') + (parent(it.path) === '/' ? '' : ' › ' + parent(it.path).slice(1).split('/').join(' › ')))
+  const off = (it) => (it.online && !it.local ? ' offline' : '') + (picked.has(pk(it)) ? ' sel' : '')
+  const pick = (it) => `<span class="pickwrap">${ficon(it)}<span class="pick" data-pick role="checkbox" aria-label="Select">${ico('i-tick', '')}</span></span>`
+  // Big folders (a camera roll) are drawn a page at a time, more as you scroll.
+  tb.className = layout === 'grid' ? 'grid' : ''
+  const html = (it, i) => layout === 'grid' ? `
+      <div class="card ${it.dir ? 'folder' : ''}${off(it)}" data-i="${i}" data-path="${esc(it.path)}">
+        <div class="top">${pick(it)}<span class="t" title="${esc(it.name)}">${esc(it.name)}</span><button class="iconbtn" data-more="${i}" aria-label="More">${ico('i-more')}</button></div>
+        <div class="thumb">${thumb(it)}</div>
+        <div class="foot"><span class="st">${stateHtml(it)}</span><span style="margin-left:auto">${it.dir ? '' : size(it.size)}</span></div>
+        <div class="pb" style="padding:0 8px 6px">${barHtml(it)}</div>
+      </div>` : `
+      <div class="row${off(it)}" data-i="${i}" data-path="${esc(it.path)}">
+        <div class="cell-name">${pick(it)}<div class="fname"><span class="t" title="${esc(it.name)}">${esc(it.name)}${/\(conflict /.test(it.name) ? '<span class="tag">conflict</span>' : ''}<span class="st">${stateHtml(it)}</span></span>
+          <div class="sub"><span class="st">${stateHtml(it)}</span><span>${[it.dir ? '' : size(it.size), when(it.mtime)].filter(Boolean).join(' · ')}</span></div><div class="pb">${barHtml(it)}</div></div></div>
+        <div class="cell">${when(it.mtime)}</div>
+        <div class="cell">${third3(it)}</div>
+        <div class="cell">${it.dir ? '—' : size(it.size)}</div>
+        <div><button class="iconbtn" data-more="${i}" aria-label="More">${ico('i-more')}</button></div>
+      </div>`
+  const key = [view, space, dir, query, layout].join('\0')
+  let n = Math.min(list.length, key === drawnKey ? Math.max(PAGE, drawn) : PAGE)
+  drawnKey = key
+  drawn = n
+  tb.innerHTML = list.slice(0, n).map(html).join('') + (n < list.length ? '<div class="more" id="more"></div>' : '')
+  bindRows(tb, list)
+  if (n >= list.length) return
+  moreObs = new IntersectionObserver((seen) => {
+    if (!seen.some((x) => x.isIntersecting)) return
+    const tpl = document.createElement('template')
+    tpl.innerHTML = list.slice(n, n + PAGE).map((it, k) => html(it, n + k)).join('')
+    bindRows(tpl.content, list)
+    $('more').before(tpl.content)
+    n = drawn = Math.min(list.length, n + PAGE)
+    if (n >= list.length) { moreObs.disconnect(); $('more').remove() }
+  }, { rootMargin: '800px' })
+  moreObs.observe($('more'))
+}
+
+const PAGE = 200
+let drawn = 0
+let drawnKey = ''
+let moreObs = null
+
+function bindRows (tb, list) {
+  for (const el of tb.querySelectorAll('[data-i]')) {
+    const it = list[el.dataset.i]
+    const i = +el.dataset.i
+    el.ondblclick = (e) => { if (!e.ctrlKey && !e.metaKey && !e.shiftKey) openItem(it) }
+    el.onclick = (e) => {
+      if (e.target.closest('[data-more]')) return
+      if (longPressed) { longPressed = false; return }
+      const touch = matchMedia('(hover: none)').matches
+      // Ctrl/Cmd toggles, Shift selects a range; while selecting on a phone, a tap toggles.
+      if (e.target.closest('[data-pick]') || e.ctrlKey || e.metaKey || (touch && picked.size)) return togglePick(i)
+      if (e.shiftKey) return pickRange(i)
+      if (e.target.closest('.st') && !it.dir) return showDetails(it)
+      // Touch screens: one tap opens (like Drive on phones). Folders always open.
+      if (touch || it.dir) openItem(it)
+      else pickOnly(i)
+    }
+    el.oncontextmenu = (e) => {
+      e.preventDefault()
+      if (matchMedia('(hover: none)').matches) return // long press selects (see onpointerdown)
+      if (picked.size > 1 && picked.has(pk(it))) return selMenu(e.clientX, e.clientY)
+      if (!picked.has(pk(it))) pickOnly(i)
+      itemMenu(it, e.clientX, e.clientY)
+    }
+    // Long press on a phone starts selecting (like Drive).
+    el.onpointerdown = (e) => {
+      if (e.pointerType !== 'touch' || e.target.closest('[data-more]')) return
+      clearTimeout(pressTimer)
+      const x = e.clientX; const y = e.clientY
+      const cancel = () => { clearTimeout(pressTimer); el.onpointermove = el.onpointerup = el.onpointercancel = null }
+      el.onpointermove = (m) => { if (Math.abs(m.clientX - x) + Math.abs(m.clientY - y) > 10) cancel() }
+      el.onpointerup = el.onpointercancel = cancel
+      pressTimer = setTimeout(() => {
+        cancel()
+        longPressed = true
+        setTimeout(() => { longPressed = false }, 800)
+        if (navigator.vibrate) try { navigator.vibrate(15) } catch {}
+        togglePick(i)
+      }, 450)
+    }
+  }
+  for (const b of tb.querySelectorAll('[data-more]')) b.onclick = (e) => { e.stopPropagation(); const r = b.getBoundingClientRect(); itemMenu(list[b.dataset.more], r.right, r.bottom) }
+}
+
+// ---- multiple selection ----
+
+// Selected items: key (drive + path) -> item. Kept while the list refreshes;
+// cleared when moving to another folder or view.
+const picked = new Map()
+let pickAnchor = null
+let pickedWhere = ''
+let pressTimer = null
+let longPressed = false
+const pk = (it) => itemSpace(it) + '\0' + it.path
+function syncPicked () {
+  for (const el of $('files').querySelectorAll('[data-i]')) el.classList.toggle('sel', picked.has(pk(shown[el.dataset.i])))
+  renderSelbar()
+}
+function togglePick (i) {
+  const it = shown[i]
+  if (picked.has(pk(it))) picked.delete(pk(it))
+  else picked.set(pk(it), it)
+  pickAnchor = i
+  syncPicked()
+}
+function pickOnly (i) {
+  picked.clear()
+  picked.set(pk(shown[i]), shown[i])
+  pickAnchor = i
+  syncPicked()
+}
+function pickRange (i) {
+  const a = pickAnchor == null ? i : Math.min(pickAnchor, shown.length - 1)
+  picked.clear()
+  for (let k = Math.min(a, i); k <= Math.max(a, i); k++) picked.set(pk(shown[k]), shown[k])
+  syncPicked()
+}
+function pickAll () {
+  for (const it of shown) picked.set(pk(it), it)
+  syncPicked()
+}
+function clearPicked () {
+  if (!picked.size) return
+  picked.clear()
+  pickAnchor = null
+  syncPicked()
+}
+// After a reload: keep what is still listed (with its fresh state), drop the rest.
+function prunePicked () {
+  const now = new Map(shown.map((it) => [pk(it), it]))
+  for (const k of [...picked.keys()]) {
+    if (now.has(k)) picked.set(k, now.get(k))
+    else picked.delete(k)
+  }
+}
+const pickedItems = () => [...picked.values()]
+
+function selActions () {
+  const list = pickedItems()
+  const files = list.filter((it) => !it.dir && !it.pending)
+  const a = []
+  if (files.length && !isAndroid()) a.push({ icon: 'i-download', label: files.length === 1 ? 'Download' : `Download ${files.length} files`, run: () => downloadMany(files) })
+  if (list.some((it) => it.online)) a.push({ icon: 'i-offline-pin', label: 'Keep on this device', run: () => syncMany(list.filter((it) => it.online), true) })
+  if (list.some((it) => !it.online)) a.push({ icon: 'i-cloud', label: 'Remove from this device', run: () => removeMany(list.filter((it) => !it.online)) })
+  if (list.some((it) => !it.pending)) a.push({ icon: 'i-trash', label: 'Delete from all devices', danger: true, run: () => deleteMany(list.filter((it) => !it.pending)) })
+  return a
+}
+function renderSelbar () {
+  const on = picked.size > 0 && view !== 'devices'
+  $('selbar').parentElement.classList.toggle('picking', on)
+  $('files').classList.toggle('picking', on && matchMedia('(hover: none)').matches)
+  if (!on) return
+  const list = pickedItems()
+  const bytes = list.reduce((n, it) => n + (it.dir ? 0 : it.size || 0), 0)
+  const acts = selActions()
+  $('selbar').innerHTML = `<button class="iconbtn" id="selClear" aria-label="Clear selection" title="Clear selection">${ico('i-close')}</button>
+    <span class="count"><b>${list.length} selected</b>${bytes ? ` <span class="small">· ${size(bytes)}</span>` : ''}</span>
+    ${acts.map((x, k) => `<button class="iconbtn${x.danger ? ' danger' : ''}" data-act="${k}" aria-label="${esc(x.label)}" title="${esc(x.label)}">${ico(x.icon)}</button>`).join('')}
+    ${picked.size < shown.length ? `<button class="iconbtn" id="selAll" aria-label="Select all" title="Select all">${ico('i-selectall')}</button>` : ''}`
+  $('selClear').onclick = clearPicked
+  if ($('selAll')) $('selAll').onclick = pickAll
+  for (const b of $('selbar').querySelectorAll('[data-act]')) b.onclick = () => acts[b.dataset.act].run()
+}
+function selMenu (x, y) {
+  popup(selActions(), x, y)
+}
+
+// Group by drive (search and recent list several drives).
+function bySpace (list) {
+  const m = new Map()
+  for (const it of list) {
+    const sp = itemSpace(it)
+    if (!m.has(sp)) m.set(sp, [])
+    m.get(sp).push(it)
+  }
+  return m
+}
+const count = (n, one, many) => n === 1 ? one : `${n} ${many}`
+
+async function downloadMany (files) {
+  for (const it of files) {
+    download(it)
+    await new Promise((resolve) => setTimeout(resolve, 300)) // browsers drop downloads started all at once
+  }
+}
+
+async function syncMany (list, on) {
+  try {
+    for (const [sp, its] of bySpace(list)) await post('/api/selective?' + q({ space: sp }), { paths: its.map((it) => it.path), sync: on })
+    const what = count(list.length, `“${list[0].name}”`, 'items')
+    toast(on ? `${what} will be kept on this device` : `${what} removed from this device (still on the others)`)
+    clearPicked()
+    load()
+  } catch (err) { toast(err.message) }
+}
+
+async function removeMany (list) {
+  if (list.length === 1) return removeHere(list[0])
+  const only = list.filter((it) => !it.dir && it.copies && it.copies.have === 0).length
+  const ok = await ask({
+    title: `Remove ${list.length} items from this device?`,
+    text: (only ? `${count(only, 'One of them has', `${only} of them have`)} not finished downloading on any other device yet: ${only === 1 ? 'it stays' : 'they stay'} in this device's sync data until one does. ` : 'Other devices keep them. ') + 'They stay listed here as online only; open them, or choose “Keep on this device”, to get them back.',
+    ok: 'Remove',
+    input: false
+  })
+  if (ok) syncMany(list, false)
+}
+
+async function deleteMany (list) {
+  if (list.length === 1) return act('delete', list[0])
+  if (!(await ask({ title: `Delete ${list.length} items?`, text: 'They will be removed from every device in this drive.', ok: 'Delete', input: false }))) return
+  let failed = 0
+  for (const it of list) {
+    try { await api('/api/file?' + q({ space: itemSpace(it), path: it.path }), { method: 'DELETE' }) } catch { failed++ }
+  }
+  toast(failed ? `${list.length - failed} deleted, ${failed} could not be deleted` : `${list.length} items deleted`)
+  clearPicked()
+  load()
+}
+
+function thumb (it) {
+  const k = kind(it)
+  if (k === 'image' && it.local !== false && !it.pending && it.size < 25 * 1024 * 1024 && !/\.heic$|\.heif$/i.test(it.name)) {
+    return `<img loading="lazy" decoding="async" alt="" src="/api/thumb?${q({ space: itemSpace(it), path: it.path, v: it.mtime || 0 })}" onerror="this.replaceWith(document.createRange().createContextualFragment(this.dataset.fb))" data-fb='${ico('f-image', '')}'>`
+  }
+  return `<span style="color:var(--i-${k})">${ico('f-' + k, '')}</span>`
+}
+
+// Update progress in place (no list reload) as status events stream in.
+function refreshStates () {
+  if (view === 'devices') return
+  for (const el of $('files').querySelectorAll('[data-i]')) {
+    const it = shown[el.dataset.i]
+    if (!it) continue
+    const st = stateHtml(it)
+    for (const s of el.querySelectorAll('.st')) if (s.innerHTML !== st) s.innerHTML = st
+    const pb = el.querySelector('.pb')
+    const bar = barHtml(it)
+    if (pb) {
+      const now = pb.querySelector('.bar > i')
+      const m = bar.match(/width:(\d+)%/)
+      if (now && m && !pb.firstElementChild.classList.contains('indet')) now.style.width = m[1] + '%'
+      else if (pb.innerHTML !== bar) pb.innerHTML = bar
+    }
+  }
+}
+
+function fileUrl (it, extra) { return '/api/file?' + q({ space: itemSpace(it), path: it.path, ...extra }) }
+
+function openItem (it) {
+  if (it.dir) return go(it.path, itemSpace(it))
+  if (it.pending) {
+    const t = transferFor(it.path, itemSpace(it))
+    return toast(t && t.bytes ? `Still downloading (${t.percent}%)` : 'Waiting for a device that has this file to come online')
+  }
+  if (it.local === false) return askDownload(it)
+  const url = fileUrl(it, { inline: 1 })
+  if (isAndroid()) location.href = url // the app opens it in a viewer
+  else window.open(url, '_blank')
+}
+
+// A file that is not on this device: download it first (it is kept here), then open it.
+let openWhenReady = null
+async function askDownload (it) {
+  const ok = await ask({
+    title: `Download “${it.name}”?`,
+    text: `It isn't on this device yet${it.size != null ? ` (${size(it.size)})` : ''}. It will be downloaded${it.device ? ' from the other devices' : ''}, kept on this device, and opened when it's done.`,
+    ok: 'Download',
+    input: false
+  })
+  if (!ok) return
+  openWhenReady = { space: itemSpace(it), path: it.path }
+  setSync(it, true)
+}
+
+function openIfReady () {
+  if (!openWhenReady) return
+  const it = items.find((x) => x.path === openWhenReady.path && itemSpace(x) === openWhenReady.space)
+  if (!it || it.local === false || it.pending) return
+  openWhenReady = null
+  openItem(it)
+}
+
+function download (it) {
+  const a = document.createElement('a')
+  a.href = fileUrl(it)
+  a.download = it.name
+  document.body.appendChild(a); a.click(); a.remove()
+}
+
+// Selective sync for one item.
+// Frees the space here; the other devices keep it, and it stays listed (online only).
+async function removeHere (it) {
+  const only = !it.dir && it.copies && it.copies.have === 0
+  const ok = await ask({
+    title: `Remove “${it.name}” from this device?`,
+    text: (only ? 'No other device has finished downloading it yet: it stays in this device\'s sync data until one does. ' : 'Other devices keep it. ') + 'It stays listed here as online only; open it, or choose “Keep on this device”, to get it back.',
+    ok: 'Remove',
+    input: false
+  })
+  if (ok) setSync(it, false)
+}
+
+async function setSync (it, on) {
+  try {
+    await post('/api/selective?' + q({ space: itemSpace(it) }), { path: it.path, sync: on })
+    toast(on ? `“${it.name}” will be kept on this device` : `“${it.name}” removed from this device (still on the others)`)
+    load()
+  } catch (err) { toast(err.message) }
+}
+
+// ---- menus ----
+
+let openMenu = null
+function closeMenu () { if (openMenu) { openMenu.remove(); openMenu = null } }
+function popup (entries, x, y) {
+  closeMenu()
+  const m = document.createElement('div')
+  m.className = 'menu'
+  m.innerHTML = entries.map((e, i) => e === '-' ? '<hr>' : `<button data-k="${i}" class="${e.danger ? 'danger' : ''}">${ico(e.icon)}${esc(e.label)}</button>`).join('')
+  document.body.appendChild(m)
+  const r = m.getBoundingClientRect()
+  m.style.left = Math.max(8, Math.min(x - (x > innerWidth / 2 ? r.width : 0), innerWidth - r.width - 8)) + 'px'
+  m.style.top = Math.max(8, Math.min(y, innerHeight - r.height - 8)) + 'px'
+  for (const b of m.querySelectorAll('button')) b.onclick = () => { closeMenu(); entries[b.dataset.k].run() }
+  openMenu = m
+}
+document.addEventListener('click', (e) => { if (openMenu && !openMenu.contains(e.target) && !e.target.closest('#newBtn,#fab,[data-more]')) closeMenu() })
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') { if (openMenu) closeMenu(); else if (!document.querySelector('dialog[open]')) clearPicked() }
+  const typing = e.target.closest && e.target.closest('input, textarea, [contenteditable]')
+  if (typing || document.querySelector('dialog[open]') || view === 'devices' || $('mainView').hidden) return
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'a' && shown.length) { e.preventDefault(); pickAll() }
+  if (e.key === 'Delete' && picked.size) { e.preventDefault(); const a = selActions().find((x) => x.danger); if (a) a.run() }
+})
+// Android back button: close what is open before leaving the app.
+function onBack () {
+  if (openMenu) { closeMenu(); return true }
+  const d = document.querySelector('dialog[open]')
+  if (d) { d.dispatchEvent(new Event('cancel')); d.close(); return true } // cancel: a pending ask() resolves
+  if (picked.size) { clearPicked(); return true }
+  // Up one folder; from Recent, search or a drive's manage page back to its files.
+  if (view === 'files' && cur() && dir !== '/') { go(parent(dir)); return true }
+  if (view !== 'files' && cur()) { go(view === 'devices' ? dir : '/'); return true }
+  return false
+}
+// Clicking the empty space around the files clears the selection.
+$('scroller').addEventListener('click', (e) => { if (!e.target.closest('[data-i], .menu, button, a, input, .page')) clearPicked() })
+addEventListener('resize', closeMenu)
+$('scroller').addEventListener('scroll', closeMenu)
+
+function itemMenu (it, x, y) {
+  const e = []
+  const here = it.local !== false
+  if (!it.pending) e.push({ icon: 'i-open', label: 'Open', run: () => openItem(it) })
+  if (!it.dir && !it.pending && !isAndroid()) e.push({ icon: 'i-download', label: 'Download', run: () => download(it) })
+  if (view !== 'files') e.push({ icon: 'f-folder', label: 'Show file location', run: () => go(parent(it.path), itemSpace(it)) })
+  e.push('-')
+  if (it.online) e.push({ icon: 'i-offline-pin', label: it.dir ? 'Download to this device' : 'Keep on this device', run: () => setSync(it, true) })
+  else e.push({ icon: 'i-cloud', label: 'Remove from this device', run: () => removeHere(it) })
+  if (!it.pending) {
+    e.push('-')
+    if (here) e.push({ icon: 'i-edit', label: 'Rename', run: () => act('rename', it) })
+    if (!it.dir) e.push({ icon: 'i-info', label: 'Sync details', run: () => showDetails(it) })
+    if (!it.dir) e.push({ icon: 'i-history', label: 'Version history', run: () => act('history', it) })
+    e.push('-')
+    e.push({ icon: 'i-trash', label: 'Delete from all devices', danger: true, run: () => act('delete', it) })
+  }
+  popup(e, x, y)
+}
+
+function newMenu (btn) {
+  const r = btn.getBoundingClientRect()
+  const inDrive = !!cur()
+  const e = []
+  if (inDrive) {
+    e.push({ icon: 'i-newfolder', label: 'New folder', run: newFolder })
+    e.push('-')
+    e.push({ icon: 'i-upfile', label: 'Upload files', run: () => $('upload').click() })
+    e.push({ icon: 'i-upfolder', label: 'Upload folder', run: () => $('uploadDir').click() })
+    e.push('-')
+  }
+  e.push({ icon: 'i-drive', label: 'New shared drive', run: () => addDrive('create') })
+  e.push({ icon: 'i-qr', label: 'Join shared drive', run: () => addDrive('join') })
+  popup(e, btn.id === 'fab' ? r.right : r.left, btn.id === 'fab' ? r.top - (inDrive ? 240 : 100) : r.bottom + 4)
+}
+
+// ---- dialogs ----
+
+// Sync details: what is happening with one file, here and on every device.
+let detItem = null
+let detTimer = null
+let detBusy = false
+const VIA = { lan: 'local network', vpn: 'VPN (e.g. Tailscale)', internet: 'internet' }
+function showDetails (it) {
+  detItem = it
+  $('detTitle').innerHTML = ficon(it) + '<span></span>'
+  $('detTitle').lastChild.textContent = it.name
+  $('detMeta').textContent = ''
+  $('detBody').innerHTML = '<p class="small">Loading…</p>'
+  $('details').showModal()
+  refreshDetails(true)
+}
+function refreshDetails (now) {
+  if (detTimer && !now) return
+  clearTimeout(detTimer)
+  detTimer = setTimeout(async () => {
+    detTimer = null
+    if (!$('details').open || !detItem || detBusy) return
+    detBusy = true
+    try { renderDetails(await api('/api/details?' + q({ space: itemSpace(detItem), path: detItem.path }))) } catch (err) { $('detBody').innerHTML = `<p class="small">${esc(err.message)}</p>` }
+    detBusy = false
+  }, now ? 0 : 1000)
+}
+const STATE_ROW = {
+  synced: ['ok', 'i-cloud-ok'],
+  adding: ['busy', 'i-sync'],
+  downloading: ['busy', 'i-down'],
+  receiving: ['busy', 'i-up'],
+  saving: ['busy', 'i-sync'],
+  waiting: ['wait', 'i-clock'],
+  pending: ['wait', 'i-clock'],
+  new: ['wait', 'i-clock'],
+  offline: ['wait', 'i-cloud-off'],
+  online: ['', 'i-cloud'],
+  failed: ['bad', 'i-error'],
+  unknown: ['', 'i-cloud']
+}
+function detRow (name, x, icon) {
+  const [cls, ic] = STATE_ROW[x.state] || ['', 'i-cloud']
+  const moving = ['adding', 'downloading', 'receiving', 'waiting'].includes(x.state)
+  const sub = []
+  if (x.bytes != null && x.size && moving) sub.push(`${size(x.bytes)} of ${size(x.size)}`)
+  if (x.speed > 1024) sub.push(size(x.speed) + '/s')
+  if (x.eta != null && moving) sub.push(eta(x.eta))
+  if (x.via) sub.push('connected via ' + VIA[x.via])
+  if (x.online === false) sub.push(x.lastSeen ? 'offline · last seen ' + ago(x.lastSeen) : 'offline')
+  const pct = moving && x.percent != null
+  const bar = pct ? `<div class="bar"><i style="width:${x.percent}%"></i></div>` : x.state === 'saving' ? '<div class="bar indet"><i></i></div>' : ''
+  return `<div class="drow ${cls}">${ico(ic)}<div style="flex:1;min-width:0"><div class="dname">${ico(icon)}<span>${esc(name)}</span></div><div class="dtext">${esc(x.text)}</div>${bar}${sub.length ? `<div class="dsub">${esc(sub.join(' · '))}</div>` : ''}</div></div>`
+}
+function renderDetails (d) {
+  const guess = (name) => /^(SM-|Pixel|moto|Redmi|M2|CPH|RMX|Galaxy|iPhone|phone|android)/i.test(name) ? 'i-phone' : 'i-laptop'
+  $('detMeta').textContent = [d.size != null ? size(d.size) : '', d.author ? 'last changed on ' + d.author : '', d.mtime ? when(d.mtime) : ''].filter(Boolean).join(' · ')
+  const ok = d.devices.filter((x) => x.state === 'synced').length + (d.here.state === 'synced' ? 1 : 0)
+  const total = d.devices.length + 1
+  let html = `<p class="small" style="margin:0 0 4px">${ok} of ${total} device${total === 1 ? ' has' : 's have'} the latest version${d.hash ? ` <span title="SHA-256 ${esc(d.hash)}">(SHA-256 ${esc(d.hash.slice(0, 12))}…)</span>` : ''}</p>`
+  html += '<h4>This device</h4>' + detRow((status.device || 'This device') + ' (this device)', d.here, status.platform === 'android' ? 'i-phone' : 'i-laptop')
+  if (d.devices.length) html += '<h4>Other devices</h4>' + d.devices.map((x) => detRow(x.name, x, guess(x.name))).join('')
+  if (d.activity.length) html += '<h4>Activity (since Syncker started)</h4>' + d.activity.map((a) => `<div class="act"><time>${esc(ago(a.at))}</time><span>${esc(a.text)}</span></div>`).join('')
+  $('detBody').innerHTML = html
+}
+
+function ask ({ title, text = '', value = '', ok = 'OK', input = true }) {
+  return new Promise((resolve) => {
+    const d = $('ask')
+    $('askTitle').textContent = title
+    $('askText').textContent = text
+    $('askText').hidden = !text
+    $('askIn').hidden = !input
+    $('askIn').value = value
+    $('askOk').textContent = ok
+    const done = (v) => { d.close(); resolve(v) }
+    $('askOk').onclick = () => done(input ? $('askIn').value.trim() : true)
+    $('askCancel').onclick = () => done(null)
+    $('askIn').onkeydown = (e) => { if (e.key === 'Enter') done($('askIn').value.trim()) }
+    d.oncancel = () => resolve(null)
+    d.showModal()
+    if (input) {
+      $('askIn').focus()
+      const dot = value.lastIndexOf('.')
+      $('askIn').setSelectionRange(0, dot > 0 ? dot : value.length)
+    }
+  })
+}
+
+async function act (a, it) {
+  const sp = itemSpace(it)
+  try {
+    if (a === 'delete') {
+      if (!(await ask({ title: `Delete “${it.name}”?`, text: 'It will be removed from every device in this drive.', ok: 'Delete', input: false }))) return
+      await api('/api/file?' + q({ space: sp, path: it.path }), { method: 'DELETE' })
+      toast(`“${it.name}” deleted`)
+    } else if (a === 'rename') {
+      const name = await ask({ title: 'Rename', value: it.name })
+      if (!name || name === it.name) return
+      if (name.includes('/')) return toast('Names cannot contain “/”')
+      await api('/api/move?' + q({ space: sp, from: it.path, to: join(parent(it.path), name) }), { method: 'POST' })
+      toast('Renamed')
+    } else if (a === 'history') {
+      const versions = await api('/api/versions?' + q({ space: sp, path: it.path }))
+      $('histTitle').textContent = it.name
+      $('histBody').innerHTML = versions.length
+        ? '<table>' + versions.map((v, i) => `<tr><td>${i === 0 ? '<b>Current</b>' : 'Older'}</td><td>${esc(v.device || '')}</td><td class="small">${v.deleted ? 'deleted' : size(v.size)}</td><td class="small">${when(v.mtime)}</td></tr>`).join('') + '</table>'
+        : '<p class="small">Not synced yet.</p>'
+      $('hist').showModal()
+      return
+    }
+    load()
+  } catch (err) { toast(err.message) }
+}
+
+// ---- shared drives ----
+
+let ddMode = 'create'
+async function addDrive (m) {
+  ddMode = m
+  drawer(false)
+  $('ddTitle').textContent = m === 'join' ? 'Join a shared drive' : 'New shared drive'
+  $('ddJoin').hidden = m !== 'join'
+  $('ddOk').textContent = m === 'join' ? 'Join' : 'Create'
+  $('ddInvite').value = ''
+  $('ddName').value = m === 'join' ? '' : 'Untitled drive'
+  $('ddFolder').value = ''
+  delete $('ddFolder').dataset.edited
+  $('driveDlg').showModal()
+  suggestFolder()
+  if (m === 'create') { $('ddName').focus(); $('ddName').select() } else $('ddInvite').focus()
+}
+let suggestTimer = null
+function suggestFolder () {
+  clearTimeout(suggestTimer)
+  suggestTimer = setTimeout(async () => {
+    if ($('ddFolder').dataset.edited) return
+    try { $('ddFolder').value = (await api('/api/spaces/suggest?' + q({ name: $('ddName').value.trim() || 'Shared drive' }))).folder } catch {}
+  }, 150)
+}
+const inviteName = (inv) => { const m = /[?&]name=([^&#\s]*)/.exec(inv || ''); try { return m ? decodeURIComponent(m[1]) : '' } catch { return '' } }
+$('ddName').oninput = suggestFolder
+$('ddFolder').oninput = () => { $('ddFolder').dataset.edited = '1' }
+
+// Picking the folder of a new drive by browsing this device's folders.
+let fsAt = null
+async function fsOpen (p) {
+  const r = await api('/api/fs/browse?' + q(p ? { path: p } : {}))
+  fsAt = r.path
+  $('fsPath').textContent = r.path
+  const rows = (r.parent ? [`<button class="fs-row" data-p="${esc(r.parent)}">${ico('i-up', '')}<span>Up one folder</span></button>`] : [])
+    .concat(r.folders.map((n) => `<button class="fs-row" data-p="${esc(r.path.replace(/\/$/, '') + '/' + n)}">${ico('f-folder', '')}<span>${esc(n)}</span></button>`))
+  $('fsList').innerHTML = rows.join('') || '<p class="small" style="padding:8px">No folders here</p>'
+  for (const b of $('fsList').querySelectorAll('[data-p]')) b.onclick = () => fsOpen(b.dataset.p).catch((err) => toast(err.message))
+  $('fsList').scrollTop = 0
+}
+let fsPick = null
+$('ddBrowse').onclick = () => browseFolder($('ddFolder').value.trim(), (p) => {
+  $('ddFolder').value = p
+  $('ddFolder').dataset.edited = '1'
+})
+async function browseFolder (p, pick) {
+  // Start at the folder given, or the nearest one of its parents that exists.
+  fsPick = pick
+  for (;;) {
+    try { await fsOpen(p.startsWith('/') ? p : null); break } catch (err) {
+      if (!p.startsWith('/') || p === '/') return toast(err.message)
+      p = parent(p)
+    }
+  }
+  $('fsDlg').showModal()
+}
+$('fsCancel').onclick = () => $('fsDlg').close()
+$('fsUse').onclick = () => {
+  if (fsPick) fsPick(fsAt)
+  $('fsDlg').close()
+}
+$('fsNew').onclick = async () => {
+  const name = await ask({ title: 'New folder', text: 'In ' + fsAt, ok: 'Create' })
+  if (!name) return
+  try { await fsOpen((await post('/api/fs/mkdir', { path: fsAt, name })).path) } catch (err) { toast(err.message) }
+}
+$('ddInvite').oninput = () => { const n = inviteName($('ddInvite').value); if (n && !$('ddName').value) { $('ddName').value = n; suggestFolder() } }
+// A new drive from a folder that already has files: choose what it shares first.
+async function pickShared (body) {
+  if (body.mode !== 'create' || !body.folder) return body
+  let level = null
+  try { level = await api('/api/fs/tree?' + q({ folder: body.folder, ignore: 1 })) } catch { return body } // not there yet: a new, empty folder
+  if (!level.folders.length && !level.loose.files) return body
+  const choice = await chooseFolders(body.folder, body.name || body.drive || 'the new drive')
+  if (!choice) return null
+  return { ...body, skip: choice.skip, ignore: choice.ignore ? DEV_IGNORE : [], direct: choice.direct }
+}
+const DEV_IGNORE = ['node_modules', '.git', 'build', '.gradle', '.cxx', 'target', '__pycache__', '.venv', 'venv', '.cache', '.idea', 'CMakeFiles', '.next', '.dart_tool', 'Pods', 'DerivedData', '.pytest_cache', '.mypy_cache', '.tox', '.externalNativeBuild', 'intermediates']
+
+$('ddOk').onclick = async () => {
+  let body = { mode: ddMode, invite: $('ddInvite').value.trim(), name: $('ddName').value.trim(), folder: $('ddFolder').value.trim() }
+  if (ddMode === 'join' && !body.invite) return toast('Paste or scan the invite first')
+  body = await pickShared(body)
+  if (!body) return
+  $('ddOk').disabled = true
+  try {
+    const d = await post('/api/spaces', body)
+    $('driveDlg').close()
+    status = await api('/api/status')
+    render(status)
+    toast(ddMode === 'join' ? `Joined “${d.name}”` : `Created “${d.name}”`)
+    if (ddMode === 'create') { space = d.id; showView('devices') } else openDrive(d.id)
+  } catch (err) { toast(err.message) } finally { $('ddOk').disabled = false }
+}
+
+async function renameDrive () {
+  const d = cur(); if (!d) return
+  const name = await ask({ title: 'Rename shared drive', text: 'The new name is used on this device and in new invites.', value: d.name })
+  if (!name || name === d.name) return
+  try { await post('/api/spaces/rename?' + q({ space: d.id }), { name }); toast('Renamed') } catch (err) { toast(err.message) }
+}
+
+async function leaveDrive () {
+  const d = cur(); if (!d) return
+  if (!(await ask({ title: `Leave “${d.name}” on this device?`, text: `Syncing stops here. Files already in ${d.folder} stay, and other devices keep the drive. You can join again with its invite.`, ok: 'Leave', input: false }))) return
+  try {
+    await post('/api/spaces/leave?' + q({ space: d.id }))
+    toast(`Left “${d.name}”`)
+    status = await api('/api/status')
+    render(status)
+    space = drives()[0] ? drives()[0].id : null
+    go('/')
+  } catch (err) { toast(err.message) }
+}
+
+// ---- choosing folders (a tree of folders, loaded level by level) ----
+//
+// Modes: 'drive' chooses what this device (or another, selDevice) syncs of a
+// drive; a draft (selDraft) while a drive just joined waits for the choice.
+// 'disk' chooses which folders of a folder on disk a new drive shares.
+let selDevice = null
+let selDraft = null
+let sel = null // { mode, space, folder, ignore, open: Set, levels: Map(dir -> level), sizes: Map(path -> size), locked }
+
+async function chooseSync (device = null) {
+  selDevice = device
+  if ($('selDlg').open) $('selDlg').close()
+  const d = cur(); if (!d) return
+  selDraft = !device && d.hold ? ['/'] : null // a drive just joined: nothing until ticked
+  const peer = device && d.peers.find((p) => p.key === device)
+  const locked = peer && d.selections && d.selections[device] && d.selections[device].allowRemote === false
+  sel = { mode: 'drive', space: d.id, open: new Set(['/']), levels: new Map(), sizes: new Map(), locked, excluded: [] }
+  $('selTitle').textContent = peer ? `Choose what ${peer.name} syncs` : selDraft ? `Choose what to sync from “${d.name}”` : 'Choose what to sync on this device'
+  $('selHelp').textContent = selDraft
+    ? 'Nothing is downloaded until you tick it. Unticked folders stay online only: you still see them and can open them while a device that has them is online. Folders added later are only downloaded inside a ticked folder.'
+    : 'Unticked folders stay online only: you still see them and can open them while a device that has them is online, but they take no space here.'
+  $('selOpts').hidden = true
+  $('selLock').hidden = !locked
+  $('selLock').textContent = locked ? `${peer.name} does not allow other devices to change what it syncs.` : ''
+  $('selStart').hidden = !selDraft
+  $('selStart').textContent = 'Start syncing'
+  $('selDone').textContent = selDraft ? 'Later' : 'Done'
+  $('selStart').onclick = async () => {
+    $('selStart').disabled = true
+    await toggling // a tick still being applied belongs to the choice
+    try { await post('/api/selective?' + q({ space: d.id }), { excluded: selDraft }); $('selDlg').close(); toast('Syncing ' + d.name); load() } catch (err) { toast(err.message) }
+    $('selStart').disabled = false
+  }
+  $('selDlg').showModal()
+  await renderSel()
+}
+
+// A new drive from a folder that already has files: which of its folders to share.
+function chooseFolders (folder, name) {
+  return new Promise((resolve) => {
+    if ($('selDlg').open) $('selDlg').close()
+    selDraft = []
+    sel = { mode: 'disk', folder, open: new Set(['/']), levels: new Map(), sizes: new Map(), locked: false, ignore: true }
+    $('selTitle').textContent = `Choose what “${name}” shares`
+    $('selHelp').textContent = `The folders you tick are shared with the devices of this drive. Unticked ones stay in ${folder} on this device only.`
+    $('selOpts').hidden = false
+    $('selIgnore').checked = true
+    $('selCopies').checked = false
+    $('selIgnore').onchange = () => { sel.ignore = $('selIgnore').checked; sel.levels.clear(); sel.sizes.clear(); renderSel() }
+    $('selLock').hidden = true
+    $('selStart').hidden = false
+    $('selStart').textContent = 'Create drive'
+    $('selDone').textContent = 'Cancel'
+    let done = false
+    $('selStart').onclick = async () => {
+      $('selStart').disabled = true
+      await toggling // a tick still being applied belongs to the choice
+      $('selStart').disabled = false
+      done = true
+      $('selDlg').close()
+      resolve({ skip: selDraft, ignore: sel.ignore, direct: !$('selCopies').checked })
+    }
+    $('selDlg').onclose = () => { $('selDlg').onclose = null; if (!done) resolve(null) }
+    $('selDlg').showModal()
+    renderSel()
+  })
+}
+
+async function selLevel (dir) {
+  if (sel.levels.has(dir)) return sel.levels.get(dir)
+  const level = sel.mode === 'disk'
+    ? await api('/api/fs/tree?' + q({ folder: sel.folder, dir, ignore: sel.ignore ? 1 : 0 }))
+    : await api('/api/tree?' + q({ space: sel.space, dir, ...(selDevice ? { device: selDevice } : {}) }))
+  sel.levels.set(dir, level)
+  if (sel.mode === 'drive') {
+    if (dir === '/') sel.sizes.set('/', { files: level.files, bytes: level.bytes })
+    for (const f of level.folders) sel.sizes.set(f.path, f)
+  }
+  return level
+}
+
+// Selective sync rules: "/a" online only, "+/a/b" synced anyway; the longest
+// matching rule wins (as offBy in engine.js).
+function offBy (rules, p) {
+  let best = null
+  for (const r of rules) {
+    const inc = r.startsWith('+')
+    const q = inc ? r.slice(1) : r
+    if (!(q === '/' || p === q || p.startsWith(q + '/'))) continue
+    if (!best || q.length > best.len) best = { len: q.length, off: !inc }
+  }
+  return best ? best.off : false
+}
+
+// Disk folders: sizes are counted in the background, a few at a time.
+let sizing = 0
+function selSizes () {
+  if (!sel || sel.mode !== 'disk') return
+  const want = [...$('selList').querySelectorAll('[data-size]')].map((el) => el.dataset.size).filter((p) => !sel.sizes.has(p))
+  for (const p of want) {
+    if (sizing >= 3) return
+    sizing++
+    sel.sizes.set(p, null)
+    const mine = sel
+    api('/api/fs/size?' + q({ folder: sel.folder, dir: p, ignore: sel.ignore ? 1 : 0 })).then((r) => {
+      if (mine !== sel) return
+      sel.sizes.set(p, r)
+      const el = $('selList').querySelector(`[data-size="${CSS.escape(p)}"]`)
+      if (el) el.textContent = sizeText(r)
+    }, () => {}).finally(() => { sizing--; selSizes() })
+  }
+}
+const sizeText = (r) => !r ? '…' : `${r.files.toLocaleString()} file${r.files === 1 ? '' : 's'} · ${size(r.bytes)}${r.partial ? '+' : ''}`
+
+let renderSeq = 0
+async function renderSel () {
+  if (!sel) return
+  const mine = sel
+  const seq = ++renderSeq // only the newest render is shown (an older one may finish later)
+  let tree
+  try { tree = await selLevel('/') } catch (err) { $('selList').innerHTML = `<p class="small" style="padding:8px">${esc(err.message)}</p>`; return }
+  if (mine !== sel) return
+  const ex = selDraft || tree.excluded
+  sel.excluded = ex
+  const off = (p) => offBy(ex, p)
+  // Partly: some rule below p says otherwise.
+  const partial = (p) => ex.some((r) => { const q = r.startsWith('+') ? r.slice(1) : r; return q !== p && (p === '/' ? q !== '/' : q.startsWith(p + '/')) && offBy(ex, q) !== off(p) })
+  const looseOff = (l) => (l.paths || []).length > 0 && l.paths.every(off)
+  const loosePartial = (l) => !looseOff(l) && (l.paths || []).some(off)
+  const box = (p, checked, part, extra = '') => `<input type="checkbox" ${extra} data-p="${esc(p)}" ${checked ? 'checked' : ''} ${part ? 'data-partial="1"' : ''} ${sel.locked ? 'disabled' : ''}>`
+  const name = sel.mode === 'disk' ? sel.folder.split('/').filter(Boolean).pop() || sel.folder : (cur() || {}).name
+  let html = `<div class="sel-row all">${box('/', !off('/'), partial('/'))}<span class="grow">Everything in ${esc(name)}</span><span class="small" ${sel.mode === 'disk' ? 'data-size="/"' : ''}>${sizeText(sel.sizes.get('/'))}</span></div>`
+  const rows = async (dir, depth) => {
+    const level = await selLevel(dir)
+    let out = ''
+    for (const f of level.folders) {
+      const open = sel.open.has(f.path)
+      const kids = sel.mode === 'disk' || f.folders
+      out += `<div class="sel-row" style="padding-left:${4 + depth * 22}px">
+        <button class="iconbtn chev${open ? ' open' : ''}" data-open="${esc(f.path)}" ${kids ? '' : 'style="visibility:hidden"'} aria-label="${open ? 'Close' : 'Open'} ${esc(f.name)}">${ico('i-chev')}</button>
+        ${box(f.path, !off(f.path), partial(f.path))}<span class="grow">${ico('f-folder')} ${esc(f.name)}</span><span class="small" ${sel.mode === 'disk' ? `data-size="${esc(f.path)}"` : ''}>${sizeText(sel.sizes.get(f.path))}</span></div>`
+      if (open) out += await rows(f.path, depth + 1)
+    }
+    const l = level.loose
+    if (l && l.files) {
+      out += `<div class="sel-row loose" style="padding-left:${4 + depth * 22}px"><span class="chev" style="visibility:hidden;width:28px;flex:none"></span>
+        ${box('loose:' + dir, !looseOff(l), loosePartial(l), 'data-loose="1"')}<span class="grow">${ico('f-file')} ${l.files.toLocaleString()} file${l.files === 1 ? '' : 's'} directly in ${dir === '/' ? esc(name) : esc(dir.split('/').pop())}</span><span class="small">${size(l.bytes)}</span></div>`
+    }
+    return out
+  }
+  try { html += await rows('/', 0) } catch (err) { html += `<p class="small" style="padding:8px">${esc(err.message)}</p>` }
+  if (mine !== sel || seq !== renderSeq) return
+  if (!tree.folders.length && !(tree.loose && tree.loose.files)) html += `<p class="small" style="padding:8px">${sel.mode === 'disk' ? 'This folder is empty.' : 'This drive is empty.'}</p>`
+  const top = $('selList').scrollTop
+  $('selList').innerHTML = html
+  $('selList').scrollTop = top
+  for (const cb of $('selList').querySelectorAll('input')) {
+    if (cb.dataset.partial) cb.indeterminate = true
+    cb.onchange = () => selToggle(cb)
+  }
+  for (const b of $('selList').querySelectorAll('[data-open]')) {
+    b.onclick = (e) => {
+      e.preventDefault()
+      const p = b.dataset.open
+      if (sel.open.has(p)) sel.open.delete(p)
+      else sel.open.add(p)
+      renderSel()
+    }
+  }
+  selSummary()
+  selSizes()
+}
+
+// One at a time: each toggle builds on the choice the previous one left.
+let toggling = Promise.resolve()
+function selToggle (cb) {
+  const run = toggling.then(() => selToggleNow(cb))
+  toggling = run.catch(() => {})
+  return run
+}
+async function selToggleNow (cb) {
+  const mine = sel
+  cb.disabled = true
+  let paths = [cb.dataset.p]
+  if (cb.dataset.loose) {
+    const level = sel.levels.get(cb.dataset.p.slice(6))
+    paths = (level && level.loose.paths) || []
+  }
+  try {
+    if (sel.mode === 'disk') selDraft = (await post('/api/fs/toggle', { folder: sel.folder, ignore: sel.ignore, base: selDraft, paths, sync: cb.checked })).excluded
+    else if (selDraft) selDraft = (await post('/api/selective?' + q({ space: sel.space }), { base: selDraft, paths, sync: cb.checked })).excluded
+    else {
+      await post('/api/selective?' + q({ space: sel.space, ...(selDevice ? { device: selDevice } : {}) }), { paths, sync: cb.checked })
+      sel.levels.clear() // re-read with the new choice
+      load()
+    }
+  } catch (err) { toast(err.message) }
+  if (mine === sel) renderSel()
+}
+
+// How much of a drive the choice keeps.
+let summarySeq = 0
+async function selSummary () {
+  const el = $('selSummaryLine')
+  if (sel.mode !== 'drive') { el.textContent = ''; return }
+  const seq = ++summarySeq
+  try {
+    const r = await post('/api/tree/selected?' + q({ space: sel.space }), { excluded: sel.excluded })
+    if (seq !== summarySeq) return
+    const d = cur()
+    const free = d && d.hold && d.hold.free
+    el.textContent = `Keeps ${size(r.bytes)} of ${size(r.total)} (${r.files.toLocaleString()} of ${r.totalFiles.toLocaleString()} files) on ${selDevice ? 'that device' : 'this device'}` + (free != null && !selDevice ? ` · ${size(free)} free` : '')
+    el.classList.toggle('bad', free != null && !selDevice && r.bytes > free)
+  } catch {}
+}
+
+// ---- uploads from this browser (with progress) ----
+
+let upSeq = 0
+function putFile (sp, p, file) {
+  const id = 'b' + (++upSeq)
+  const u = { id, space: sp, path: p, size: file.size, bytes: 0, state: 'active', device: 'this browser', started: Date.now() }
+  uploads.set(id, u)
+  panelClosed = false
+  renderPanel()
+  return new Promise((resolve, reject) => {
+    const x = new XMLHttpRequest()
+    x.open('PUT', '/api/file?' + q({ space: sp, path: p }))
+    x.upload.onprogress = (e) => { u.bytes = e.loaded; renderPanel(); refreshStates() }
+    x.onload = () => {
+      if (x.status >= 200 && x.status < 300) { u.state = 'done'; u.bytes = u.size; u.finished = Date.now(); renderPanel(); resolve() } else {
+        u.state = 'failed'; u.finished = Date.now(); renderPanel()
+        let msg = x.statusText
+        try { msg = JSON.parse(x.responseText).error || msg } catch {}
+        reject(new Error(msg))
+      }
+    }
+    x.onerror = () => { u.state = 'failed'; u.finished = Date.now(); renderPanel(); reject(new Error('upload failed')) }
+    x.send(file)
+  })
+}
+
+async function uploadFiles (files) {
+  if (!files.length) return
+  if (!cur()) return toast('Open a shared drive first')
+  const sp = space
+  const base = view === 'files' ? dir : '/'
+  let n = 0
+  for (const f of files) {
+    const rel = f.webkitRelativePath || f.name
+    try { await putFile(sp, join(base, rel), f); n++ } catch (err) { toast(`${f.name}: ${err.message}`) }
+    if (n % 10 === 0) load()
+  }
+  if (n) toast(n === 1 ? `Uploaded “${files[0].name}”` : `${n} files uploaded`)
+  load()
+}
+
+async function newFolder () {
+  if (!cur()) return
+  const name = await ask({ title: 'New folder', value: 'Untitled folder', ok: 'Create' })
+  if (!name) return
+  if (name.includes('/')) return toast('Names cannot contain “/”')
+  const base = view === 'files' ? dir : '/'
+  try { await api('/api/mkdir?' + q({ space, path: join(base, name) }), { method: 'POST' }) } catch (err) { return toast(err.message) }
+  toast('Folders sync to other devices once they contain a file')
+  go(join(base, name))
+}
+
+function syncNow () {
+  api('/api/sync?' + q(space ? { space } : {}), { method: 'POST' }).then(() => { toast('Synced'); load() }, (err) => toast(err.message))
+}
+
+function copyInvite () {
+  const text = cur() && cur().invite
+  if (!text) return
+  ;(navigator.clipboard ? navigator.clipboard.writeText(text) : Promise.reject(new Error())).then(() => toast('Invite copied'), () => {
+    const r = document.createRange(); r.selectNodeContents($('invite'))
+    getSelection().removeAllRanges(); getSelection().addRange(r); toast('Select and copy the invite')
+  })
+}
+
+// ---- transfer panel ----
+
+function openPanel () { panelClosed = false; $('panel').classList.remove('min'); renderPanel(true) }
+function closePanel () {
+  panelClosed = true
+  for (const [k, u] of uploads) if (u.state !== 'active') uploads.delete(k)
+  renderPanel()
+}
+function togglePanel () {
+  const p = $('panel'); p.classList.toggle('min')
+  $('panelMin').innerHTML = ico(p.classList.contains('min') ? 'i-expand' : 'i-collapse')
+}
+
+function ring (pct, waiting) {
+  const r = 11; const c = 2 * Math.PI * r
+  return `<svg class="ring ${waiting ? 'wait' : ''}" viewBox="0 0 28 28"><circle class="bg" cx="14" cy="14" r="${r}"/><circle class="fg" cx="14" cy="14" r="${r}" stroke-dasharray="${c.toFixed(1)}" stroke-dashoffset="${(c * (1 - pct / 100)).toFixed(1)}"/></svg>`
+}
+
+function describe (t) {
+  const name = t.path.split('/').pop()
+  const where = drives().length > 1 ? ` · ${driveName(t.space)}` : ''
+  if (t.state === 'failed') return [name, 'Failed']
+  if (t.dir === 'browser') return [name, (t.state === 'done' ? 'Uploaded' : `Uploading · ${size(t.bytes)} of ${size(t.size)}`) + where]
+  if (t.dir === 'add') return [name, (t.state === 'done' ? 'Added to the drive' : `Preparing · ${t.percent}%`) + where]
+  const who = t.device || 'device'
+  if (t.dir === 'up') return [name, (t.state === 'done' ? `Sent to ${who}` : `Sending to ${who} · ${size(t.bytes)} of ${size(t.size)}${t.speed ? ' · ' + size(t.speed) + '/s' : ''}${t.eta != null ? ' · ' + eta(t.eta) : ''}`) + where]
+  if (t.state === 'done') return [name, `Downloaded from ${who}` + where]
+  if (t.state === 'saving') return [name, 'Saving…']
+  if (t.preparing != null) return [name, `Being prepared on ${who} · ${t.preparing}%` + where]
+  if (t.state === 'waiting' || (!t.bytes && !t.speed)) return [name, t.online === false ? `Waiting for ${who} to come online` : `Waiting for ${who}…`]
+  return [name, `${size(t.bytes)} of ${size(t.size)}${t.speed ? ' · ' + size(t.speed) + '/s' : ''}${t.eta != null ? ' · ' + eta(t.eta) : ''}` + where]
+}
+
+let lastPanel = ''
+let wasActive = false
+function renderPanel (force) {
+  const all = transfers().filter((t) => t.dir !== 'add' || t.size > 2 * 1024 * 1024 || t.state !== 'done') // tiny local adds are noise
+  const active = all.filter(moving)
+  const visible = all.length && !panelClosed
+  $('panel').hidden = !visible
+  document.body.classList.toggle('has-panel', !!visible)
+  if (!visible) return
+  // Collapse to the title bar once everything is done (it stays one tap away).
+  if (wasActive && !active.length && !$('panel').classList.contains('min')) togglePanel()
+  wasActive = active.length > 0
+  const down = active.filter((t) => t.dir === 'down')
+  const prep = down.filter((t) => t.preparing != null)
+  const sending = active.filter((t) => t.dir !== 'down')
+  let title
+  if (!active.length) {
+    const done = all.filter((t) => t.state === 'done').length
+    title = done === 1 ? '1 file synced' : `${done} files synced`
+  } else if (prep.length && prep.length === down.length && !sending.length) title = `Waiting for ${prep[0].device} to prepare ${prep.length === 1 ? '1 file' : prep.length + ' files'}`
+  else if (down.length) title = `Downloading ${down.length} file${down.length === 1 ? '' : 's'}`
+  else title = `Sending ${sending.length} file${sending.length === 1 ? '' : 's'}`
+  const tot = active.reduce((a, t) => [a[0] + (t.bytes || 0), a[1] + (t.size || 0)], [0, 0])
+  const sp = drives().reduce((a, d) => ({ down: a.down + ((d.speed && d.speed.down) || 0), up: a.up + ((d.speed && d.speed.up) || 0) }), { down: 0, up: 0 })
+  const pct = tot[1] ? Math.floor(tot[0] * 100 / tot[1]) : 0
+  const sum = active.length && prep.length === active.length
+    ? `<span>${size(tot[1])} · being prepared</span>`
+    : active.length
+      ? `<span>${pct}% · ${size(tot[0])} of ${size(tot[1])}</span><span>${sp.down > 1024 ? '↓ ' + size(sp.down) + '/s ' : ''}${sp.up > 1024 ? '↑ ' + size(sp.up) + '/s' : ''}</span>`
+      : '<span>All done</span>'
+  const order = all.slice().sort((a, b) => (moving(b) - moving(a)) || ((b.finished || 0) - (a.finished || 0)))
+  const list = order.slice(0, 50).map((t) => {
+    const [n, d] = describe(t)
+    const right = t.state === 'done' ? `<span class="done-ic">${ico('i-check')}</span>`
+      : t.state === 'failed' ? `<span class="fail-ic">${ico('i-error')}</span>`
+        : t.preparing != null ? ring(t.preparing, true)
+        : ring(t.percent || 0, t.state === 'waiting' || (t.dir === 'down' && !t.bytes && !t.speed))
+    return `<div class="tr" data-path="${esc(t.path)}" data-space="${esc(t.space || '')}">${ficon({ name: n })}<div class="grow"><div class="t" title="${esc(t.path)}">${esc(n)}</div><div class="d">${esc(d)}</div></div>${right}</div>`
+  }).join('')
+  const html = title + '|' + sum + '|' + list
+  if (html === lastPanel && !force) return
+  lastPanel = html
+  $('panelTitle').textContent = title
+  $('panelSum').innerHTML = sum
+  $('panelList').innerHTML = list
+  for (const el of $('panelList').querySelectorAll('.tr')) {
+    el.onclick = () => go(parent(el.dataset.path), el.dataset.space || space)
+  }
+}
+
+// ---- status ----
+
+const asked = new Set() // drives whose "choose what to sync" opened by itself
+function driveState (d) {
+  if (d.status.phase === 'error') return { cls: 'bad', icon: 'i-error' }
+  const busy = (d.transfers || []).some((t) => t.state === 'active' || t.state === 'saving') || d.status.phase === 'syncing'
+  return busy ? { cls: 'busy', icon: 'i-sync' } : { cls: '', icon: '' }
+}
+
+function render (s) {
+  status = s
+  $('setupView').hidden = s.configured
+  $('mainView').hidden = !s.configured
+  if (!s.configured) {
+    if (!$('nameIn').value) $('nameIn').value = s.defaultName || ''
+    if (!$('folderIn').dataset.edited) $('folderIn').value = s.defaultFolder || ''
+    return
+  }
+  if (!cur() && drives().length) space = drives()[0].id
+  // sidebar drives
+  const dhtml = drives().map((d) => {
+    const st = driveState(d)
+    const on = d.peers.filter((p) => p.online).length
+    return `<a class="nav" data-drive="${esc(d.id)}" title="${esc(d.folder)}">${ico(d.camera ? 'f-image' : 'i-drive')}<span class="nm">${esc(d.name)}</span><span class="dstate ${st.cls}">${st.icon ? ico(st.icon) : `<span class="count">${on}/${d.peers.length + 1}</span>`}</span></a>`
+  }).join('')
+  if ($('drives').innerHTML !== dhtml) {
+    $('drives').innerHTML = dhtml
+    for (const a of $('drives').querySelectorAll('[data-drive]')) a.onclick = () => openDrive(a.dataset.drive)
+  }
+  setNav()
+  // Photo backup: offered once on a phone, then from the sidebar.
+  const cam = s.camera
+  $('camNav').hidden = !cam || !!cam.space
+  if (cam && !cam.asked && !cam.space && !camOffered && drives().length && !document.querySelector('dialog[open]')) { camOffered = true; askCamera() }
+
+  // status chip: all drives together
+  const all = drives()
+  const peers = new Map()
+  for (const d of all) for (const p of d.peers) peers.set(p.key, peers.get(p.key) || p.online)
+  const online = [...peers.values()].filter(Boolean).length
+  const active = transfers().filter(moving)
+  const errs = all.filter((d) => d.status.phase === 'error')
+  const pending = all.reduce((n, d) => n + (d.pendingCount != null ? d.pendingCount : d.pending.length), 0)
+  const down = active.filter((t) => t.dir === 'down' && t.state !== 'waiting' && (t.bytes || t.speed))
+  let text
+  let cls = 'ok'
+  let icon = 'i-cloud-ok'
+  if (errs.length) {
+    const e = errs[0].status.error || ''
+    text = /All files access/.test(e) ? 'Paused: allow file access' : /Folder unavailable/.test(e) ? 'Paused: folder unavailable' : 'Sync error'
+    cls = 'error'; icon = 'i-error'
+  } else if (down.length || active.some((t) => t.state === 'active' && t.dir !== 'down')) {
+    const list = down.length ? down : active
+    const tot = list.reduce((a, t) => [a[0] + (t.bytes || 0), a[1] + (t.size || 0)], [0, 0])
+    text = `Syncing ${list.length} file${list.length === 1 ? '' : 's'} · ${tot[1] ? Math.floor(tot[0] * 100 / tot[1]) : 0}%`
+    cls = 'busy'; icon = 'i-sync'
+  } else if (active.some((t) => t.preparing != null)) {
+    const prep = active.filter((t) => t.preparing != null)
+    text = `${prep[0].device} is preparing ${prep.length === 1 ? '1 file' : prep.length + ' files'} · ${Math.floor(prep.reduce((n, t) => n + t.preparing, 0) / prep.length)}%`
+    cls = 'busy'; icon = 'i-sync'
+  } else if (pending) { text = `Waiting for ${pending} file${pending === 1 ? '' : 's'}`; cls = ''; icon = 'i-clock' } else if (all.some((d) => d.status.phase === 'syncing')) { text = 'Syncing…'; cls = 'busy'; icon = 'i-sync' } else if (peers.size && !online) { text = 'Up to date · devices offline'; icon = 'i-cloud-off'; cls = '' } else text = 'Up to date'
+  $('statetext').textContent = text
+  $('syncChip').className = cls
+  $('syncChip').title = text + ` · ${online}/${peers.size} other devices online`
+  $('syncIcon').innerHTML = `<use href="#${icon}"/>`
+  const files = all.reduce((n, d) => n + ((d.totals && d.totals.files) || 0), 0)
+  const bytes = all.reduce((n, d) => n + ((d.totals && d.totals.bytes) || 0), 0)
+  $('totFiles').textContent = `${files} file${files === 1 ? '' : 's'} on this device`
+  $('totBytes').textContent = size(bytes) + ` in ${all.length} drive${all.length === 1 ? '' : 's'}`
+  $('device').textContent = 'This device: ' + s.device
+
+  // banner for the current drive
+  const d = cur()
+  const failed = (d && d.failed) || []
+  const b = $('banner')
+  const prevKey = b.dataset.key
+  b.dataset.key = ''
+  if (d && d.hold && d.status.phase !== 'error') {
+    const h = d.hold
+    b.className = 'info'
+    const html = !h.ready
+      ? `${ico('i-clock')}<div class="grow">Checking how big “${esc(d.name)}” is… Nothing is downloaded until then.${d.peers.some((p) => p.online) ? '' : ' Waiting for another device of this drive to come online.'}</div>`
+      : `${ico('i-cloud')}<div class="grow"><b>“${esc(d.name)}” has ${size(h.bytes)} in ${h.files} file${h.files === 1 ? '' : 's'}.</b> ${h.free != null ? `This device has ${size(h.free)} free. ` : ''}${h.free != null && h.bytes > h.free ? 'It does not fit: choose what to sync. ' : ''}Sync everything to this device?</div>
+         <div class="hold-acts">${h.free == null || h.bytes < h.free ? '<button class="btn primary" id="holdAll">Sync everything</button>' : ''}<button class="btn" id="holdChoose">Choose folders</button><button class="btn text" id="holdNone">Keep online only</button></div>`
+    b.hidden = false
+    const key = JSON.stringify([d.id, h, d.peers.some((p) => p.online)])
+    b.dataset.key = key
+    if (prevKey !== key) {
+      b.innerHTML = html
+      const go = (excluded, msg) => post('/api/selective?' + q({ space: d.id }), { excluded }).then(() => { toast(msg); load() }, (err) => toast(err.message))
+      if ($('holdAll')) $('holdAll').onclick = () => go([], 'Syncing everything in ' + d.name)
+      if ($('holdChoose')) $('holdChoose').onclick = () => chooseSync()
+      if ($('holdNone')) $('holdNone').onclick = () => go(['/'], 'Files stay online only. Open any of them, or choose what to keep, anytime.')
+      // Once its size is known, ask right away (once per drive and session).
+      if (h.ready && !asked.has(d.id) && !document.querySelector('dialog[open]')) { asked.add(d.id); chooseSync() }
+    }
+  } else if (d && d.status.phase === 'error') { b.className = ''; b.innerHTML = `${ico('i-error')}<div class="grow">${esc(d.status.error)}</div>`; b.hidden = false } else if (failed.length) {
+    b.className = ''; b.innerHTML = `${ico('i-error')}<div class="grow">${failed.length} file${failed.length === 1 ? '' : 's'} couldn't sync to this device</div><button class="btn text" onclick="showView('devices')">Details</button>`; b.hidden = false
+  } else b.hidden = true
+  renderDevices()
+  renderPanel()
+  refreshStates()
+}
+
+let camOffered = false
+function askCamera () {
+  drawer(false)
+  const dlg = $('camDlg')
+  $('camName').textContent = `“${status.device} photos”`
+  let folder = status.camera.folder
+  const show = () => { $('camFolder').textContent = folder.replace(/^\/storage\/emulated\/0\//, '') }
+  show()
+  $('camChange').onclick = () => browseFolder(folder, (p) => { folder = p; show() })
+  const answer = async (on) => {
+    $('camYes').disabled = $('camNo').disabled = true
+    try {
+      const d = await post('/api/camera', { on, folder })
+      dlg.close()
+      if (d) {
+        space = d.id
+        showView('devices')
+        toast('Backing up your photos. To get them on your computer, join this drive there with its invite.')
+      } else toast('You can turn on photo backup anytime from the menu')
+    } catch (err) { toast(err.message) } finally { $('camYes').disabled = $('camNo').disabled = false }
+  }
+  $('camYes').onclick = () => answer(true)
+  $('camNo').onclick = () => answer(false)
+  dlg.showModal()
+}
+
+function renderDevices () {
+  const d = cur()
+  if (view !== 'devices' || !d) return
+  crumbs()
+  const xfer = (name) => transfers().filter((t) => moving(t) && t.space === d.id && t.device === name)
+  const sel = d.selections || {}
+  const stores = (key) => {
+    const r = sel[key]
+    const ex = r ? r.excluded : []
+    const what = ex.includes('/') ? 'Stores nothing (online only)' : ex.length ? `Stores everything except ${ex.length} item${ex.length === 1 ? '' : 's'}` : 'Stores everything'
+    return what + (r && r.allowRemote === false ? ' · only it can change this' : '')
+  }
+  const dev = (name, sub, on, me, icon, key) => `<div class="dev"><div class="av">${ico(icon)}<span class="dot ${on ? 'on' : ''}"></span></div><div class="grow"><div class="nm">${esc(name)}${me ? ' <span class="small">(this device)</span>' : ''}</div><div class="small">${sub}</div><div class="small">${esc(stores(key))}</div></div>
+    <button class="iconbtn" title="Choose what ${esc(name)} syncs" data-sel="${me ? '' : esc(key)}">${ico('i-tune')}</button></div>`
+  const guess = (name) => /^(SM-|Pixel|moto|Redmi|M2|CPH|RMX|Galaxy|iPhone|phone|android)/i.test(name) ? 'i-phone' : 'i-laptop'
+  const html = dev(status.device, `${d.totals.files} files stored here · ${size(d.totals.bytes)}`, true, true, status.platform === 'android' ? 'i-phone' : 'i-laptop', d.key) +
+    d.peers.map((p) => {
+      const x = xfer(p.name)
+      const sub = p.online
+        ? 'Online' + (x.length ? ` · ${x.some((t) => t.dir === 'down') ? 'sending you' : 'receiving'} ${x.length} file${x.length === 1 ? '' : 's'}` : '')
+        : p.lastSeen ? 'Last seen ' + ago(p.lastSeen) : 'Never connected'
+      return dev(p.name, sub, p.online, false, guess(p.name), p.key)
+    }).join('') +
+    (d.peers.length ? '' : '<p class="small">No other devices yet. Add one below.</p>')
+  if ($('peers').innerHTML !== html) {
+    $('peers').innerHTML = html
+    for (const b of $('peers').querySelectorAll('[data-sel]')) b.onclick = () => chooseSync(b.dataset.sel || null)
+  }
+  $('allowRemote').checked = d.allowRemote !== false
+  $('allowRemote').onchange = async () => {
+    try { await post('/api/spaces/remote?' + q({ space: d.id }), { allow: $('allowRemote').checked }) } catch (err) { toast(err.message) }
+  }
+  if ($('invite').textContent !== d.invite) $('qr').src = '/api/invite.svg?' + q({ space: d.id, v: d.invite.slice(-12) })
+  $('invite').textContent = d.invite
+  $('inviteHelp').innerHTML = isAndroid()
+    ? `On your computer, open Syncker, choose <b>Join with invite</b> and paste this invite${d.camera ? ' to get the photos from this phone' : ''}. On another phone, scan this code with the camera.`
+    : 'On your phone, scan this code with the camera, or open Syncker, choose <b>Join with invite</b>, then <b>Scan QR code</b>.'
+  const ex = d.excluded || []
+  $('selSummary').textContent = ex.includes('/') ? 'Nothing: the whole drive is online only'
+    : ex.length ? `Everything except ${ex.length} online-only item${ex.length === 1 ? '' : 's'} (${ex.slice(0, 3).map((p) => p.slice(1)).join(', ')}${ex.length > 3 ? ', …' : ''})` : 'Everything'
+  $('folder').textContent = d.folder
+  $('storeMode').textContent = d.direct
+    ? 'Files are sent straight from the folder: no second copy in the sync data. Only the latest version of each file can be downloaded, from a device that has it.'
+    : 'Each device keeps a copy of what it shares in its sync data, so older versions stay downloadable.'
+  const ign = (d.ignore || []).join(', ')
+  $('ignoreKey').hidden = $('ignoreList').hidden = !ign
+  $('ignoreList').textContent = ign + ' (on this device)'
+  $('lastsync').textContent = d.status.lastSync ? ago(d.status.lastSync) : 'never'
+  const n = d.network
+  $('netinfo').textContent = !n ? '' : !n.online ? 'Offline: no connection to the peer network'
+    : `Online · ${n.connections} connection${n.connections === 1 ? '' : 's'}${n.firewalled ? ' · behind a firewall/NAT (connects by hole punching)' : ' · directly reachable'}`
+  const reasons = { ENAMETOOLONG: 'name too long for this device', EISDIR: 'a folder here has the same name', ENOTDIR: 'a file here has the same name as a folder', ESYMLINK: 'goes through a symbolic link', EACCES: 'permission denied', EINVAL: 'name not allowed on this device', ENOSPC: 'disk full' }
+  const failed = d.failed || []
+  $('failedBox').hidden = !failed.length
+  $('failed').innerHTML = failed.slice(0, 50).map((f) => `<div>${esc(f.path)} — ${esc(reasons[f.error] || f.error)}</div>`).join('')
+}
+
+// ---- search ----
+
+let searchTimer = null
+$('searchIn').oninput = () => {
+  clearTimeout(searchTimer)
+  const v = $('searchIn').value.trim()
+  $('searchClear').hidden = !v
+  searchTimer = setTimeout(() => {
+    if (!v) { if (view === 'search') go(dir); return }
+    query = v
+    view = 'search'
+    setNav()
+    load()
+  }, 200)
+}
+function clearSearch () { $('searchIn').value = ''; $('searchClear').hidden = true; if (view === 'search') go(dir) }
+
+// ---- drawer (phones) ----
+
+function drawer (open) {
+  $('sidebar').classList.toggle('open', open)
+  $('scrim').hidden = !open
+}
+
+// ---- QR scanning (camera + jsQR, loaded on demand) ----
+let scanStream = null
+let scanTarget = 'inviteIn'
+
+function loadJsQR () {
+  if (window.jsQR) return Promise.resolve()
+  return new Promise((resolve, reject) => {
+    const el = document.createElement('script')
+    el.src = '/vendor/jsqr.js'
+    el.onload = resolve
+    el.onerror = () => reject(new Error('could not load scanner'))
+    document.head.appendChild(el)
+  })
+}
+
+async function startScan (target = 'inviteIn') {
+  scanTarget = target
+  // On the phone, its own camera app takes a sharp, focused photo of the code.
+  if (isAndroid()) {
+    $('scanPhoto').value = ''
+    return $('scanPhoto').click()
+  }
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return toast('No camera available here')
+  try {
+    await loadJsQR()
+    // A sharp, high resolution picture: phones open the camera small (640x480) otherwise.
+    scanStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment', width: { ideal: 1920 }, height: { ideal: 1080 } }, audio: false })
+  } catch (err) { return toast('Camera: ' + err.message) }
+  const track = scanStream.getVideoTracks()[0]
+  if (track && track.applyConstraints) track.applyConstraints({ advanced: [{ focusMode: 'continuous' }] }).catch(() => {})
+  scanDetector = null
+  try {
+    if (window.BarcodeDetector && (await BarcodeDetector.getSupportedFormats()).includes('qr_code')) scanDetector = new BarcodeDetector({ formats: ['qr_code'] })
+  } catch {}
+  const v = $('scanVideo')
+  v.srcObject = scanStream
+  $('scanner').showModal()
+  await v.play().catch(() => {})
+  requestAnimationFrame(scanFrame)
+}
+
+let scanDetector = null
+let scanTick = 0
+async function scanFrame () {
+  if (!scanStream) return
+  const v = $('scanVideo')
+  if (v.readyState >= 2 && v.videoWidth) {
+    let text = null
+    // The phone's own detector, when it has one, reads codes far better.
+    if (scanDetector) {
+      try { text = ((await scanDetector.detect(v)).find((c) => /^syncker:/i.test((c.rawValue || '').trim())) || {}).rawValue || null } catch { scanDetector = null }
+      if (!scanStream) return
+    }
+    if (!text) {
+      // Every other frame, only the middle at full size: a small or distant code
+      // gets too few pixels when the whole frame is scaled down.
+      const vw = v.videoWidth; const vh = v.videoHeight
+      let sx = 0; let sy = 0; let sw = vw; let sh = vh
+      if (scanTick++ % 2) { sw = sh = Math.round(Math.min(vw, vh) * 0.7); sx = Math.round((vw - sw) / 2); sy = Math.round((vh - sh) / 2) }
+      const scale = Math.min(1, 800 / Math.max(sw, sh)) // keep decoding fast on phones
+      const w = Math.round(sw * scale)
+      const h = Math.round(sh * scale)
+      const c = $('scanCanvas')
+      c.width = w; c.height = h
+      const ctx = c.getContext('2d', { willReadFrequently: true })
+      ctx.drawImage(v, sx, sy, sw, sh, 0, 0, w, h)
+      const code = window.jsQR(ctx.getImageData(0, 0, w, h).data, w, h, { inversionAttempts: 'attemptBoth' })
+      text = code && code.data
+    }
+    text = text && text.trim()
+    if (text && /^syncker:/i.test(text)) {
+      $(scanTarget).value = text
+      $(scanTarget).dispatchEvent(new Event('input'))
+      stopScan()
+      toast('Invite scanned')
+      return
+    }
+  }
+  requestAnimationFrame(scanFrame)
+}
+
+$('scanPhoto').onchange = async () => {
+  const file = $('scanPhoto').files[0]
+  if (!file) return
+  toast('Reading the QR code…')
+  let text = null
+  try { text = await readQrPhoto(file) } catch {}
+  if (!text) return toast('No Syncker invite found in the photo. Try again a little closer, with the whole code in view.')
+  $(scanTarget).value = text
+  $(scanTarget).dispatchEvent(new Event('input'))
+  toast('Invite scanned')
+}
+
+// The invite in a photo of a QR code, or null.
+async function readQrPhoto (file) {
+  await loadJsQR()
+  const img = await createImageBitmap(file, { imageOrientation: 'from-image' })
+  const ok = (t) => t && /^syncker:/i.test(t.trim()) ? t.trim() : null
+  try {
+    if (window.BarcodeDetector) {
+      try {
+        const hit = (await new BarcodeDetector({ formats: ['qr_code'] }).detect(img)).map((c) => ok(c.rawValue)).find(Boolean)
+        if (hit) return hit
+      } catch {}
+    }
+    // jsQR reads best when each square of the code is a few pixels wide: try a few
+    // sizes, of the whole photo and of its middle.
+    const c = $('scanCanvas')
+    const ctx = c.getContext('2d', { willReadFrequently: true })
+    for (const part of [1, 0.6]) {
+      const sw = Math.round(img.width * part); const sh = Math.round(img.height * part)
+      const sx = Math.round((img.width - sw) / 2); const sy = Math.round((img.height - sh) / 2)
+      for (const max of [1000, 1600, 600, 2400]) {
+        const scale = Math.min(1, max / Math.max(sw, sh))
+        const w = Math.round(sw * scale); const h = Math.round(sh * scale)
+        c.width = w; c.height = h
+        ctx.drawImage(img, sx, sy, sw, sh, 0, 0, w, h)
+        const code = window.jsQR(ctx.getImageData(0, 0, w, h).data, w, h, { inversionAttempts: 'attemptBoth' })
+        if (ok(code && code.data)) return ok(code.data)
+        if (scale === 1) break
+        await new Promise((resolve) => setTimeout(resolve)) // keep the page responsive
+      }
+    }
+    return null
+  } finally { img.close() }
+}
+
+function stopScan () {
+  if (scanStream) scanStream.getTracks().forEach((t) => t.stop())
+  scanStream = null
+  $('scanVideo').srcObject = null
+  if ($('scanner').open) $('scanner').close()
+}
+$('scanner').addEventListener('close', () => { if (scanStream) stopScan() })
+
+function setMode (m) {
+  mode = m
+  $('tabCreate').classList.toggle('on', m === 'create')
+  $('tabJoin').classList.toggle('on', m === 'join')
+  $('joinFields').hidden = m !== 'join'
+  $('setupBtn').textContent = m === 'join' ? 'Join shared drive' : 'Create shared drive'
+  if (m === 'join') { const n = inviteName($('inviteIn').value); $('driveIn').value = n || '' } else if (!$('driveIn').value) $('driveIn').value = 'My drive'
+}
+$('inviteIn').oninput = () => { const n = inviteName($('inviteIn').value); if (n) $('driveIn').value = n }
+
+async function doSetup () {
+  let body = { mode, invite: $('inviteIn').value.trim(), name: $('nameIn').value.trim(), folder: $('folderIn').value.trim(), drive: $('driveIn').value.trim() }
+  if (mode === 'join' && !body.invite) return toast('Paste the invite first')
+  body = await pickShared({ ...body, name: body.drive })
+  if (!body) return
+  body.name = $('nameIn').value.trim() // pickShared used the drive name for the title
+  $('setupBtn').disabled = true
+  try {
+    render(await post('/api/setup', body))
+    showView('files')
+  } catch (err) { toast(err.message) } finally { $('setupBtn').disabled = false }
+}
+
+// ---- wiring ----
+
+$('folderIn').oninput = () => { $('folderIn').dataset.edited = '1' }
+$('upload').onchange = (e) => { uploadFiles([...e.target.files]); e.target.value = '' }
+$('uploadDir').onchange = (e) => { uploadFiles([...e.target.files]); e.target.value = '' }
+let dragDepth = 0
+const content = $('content')
+content.ondragenter = (e) => { if (!e.dataTransfer.types.includes('Files') || !cur()) return; e.preventDefault(); dragDepth++; $('dropText').textContent = 'Drop files to upload to ' + (view === 'files' && dir !== '/' ? dir.split('/').pop() : cur().name); $('dropOverlay').hidden = false }
+content.ondragover = (e) => { if (e.dataTransfer.types.includes('Files')) e.preventDefault() }
+content.ondragleave = () => { if (--dragDepth <= 0) { dragDepth = 0; $('dropOverlay').hidden = true } }
+content.ondrop = (e) => { e.preventDefault(); dragDepth = 0; $('dropOverlay').hidden = true; uploadFiles([...e.dataTransfer.files]) }
+
+// Reload the listing only when files may have changed, not on every progress tick.
+let reload = null
+let lastKey = ''
+let first = true
+const es = new EventSource('/api/events')
+es.onmessage = (e) => {
+  const s = JSON.parse(e.data)
+  const wasConfigured = status && status.configured
+  render(s)
+  if (!s.configured) return
+  if (first || !wasConfigured) { first = false; showView(view); lastKey = ''; return }
+  const key = drives().map((d) => [d.id, d.name, d.status.lastSync, d.pendingRev != null ? d.pendingRev + ':' + d.pendingCount : d.pending.join('|'), d.totals.files, d.totals.bytes, (d.excluded || []).join('|'), (d.transfers || []).filter((t) => t.state === 'done').length, d.listed].join(',')).join(';')
+  if ($('listingMsg') && cur() && cur().listed === false) $('listingMsg').textContent = listingText(cur())
+  if ($('details').open) refreshDetails()
+  if (key !== lastKey) { lastKey = key; clearTimeout(reload); reload = setTimeout(() => { load(); if (view === 'devices') renderDevices() }, 300) }
+}
+es.onerror = () => { $('syncChip').className = 'error'; $('statetext').textContent = 'Disconnected from Syncker'; $('syncIcon').innerHTML = '<use href="#i-error"/>' }
+setInterval(() => { if (status && status.configured && view === 'devices') renderDevices() }, 30000)
+
+// Routes: #recent, #d=<drive>&p=<path>, #d=<drive>&manage=1, and the older #<path>.
+const h = location.hash.slice(1)
+if (h === 'recent') view = 'recent'
+else if (h.startsWith('d=')) {
+  const p = new URLSearchParams(h)
+  space = p.get('d') || null
+  dir = p.get('p') || '/'
+  if (p.get('manage')) view = 'devices'
+} else if (h === 'devices') view = 'devices'
+else dir = decodeURIComponent(h) || '/'
+
+// Opened from a scanned invite link (the Android app passes ?invite=syncker:...).
+const linkInvite = new URLSearchParams(location.search).get('invite')
+if (linkInvite) {
+  history.replaceState(null, '', location.pathname + location.hash)
+  // Already set up: the invite is for another shared drive.
+  fetch('/api/status').then((r) => r.json()).then((s) => {
+    if (s.configured) {
+      addDrive('join').then(() => { $('ddInvite').value = linkInvite; $('ddInvite').dispatchEvent(new Event('input')) })
+    } else {
+      setMode('join')
+      $('inviteIn').value = linkInvite
+      $('inviteIn').dispatchEvent(new Event('input'))
+    }
+  }, () => {})
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,90 @@
+{
+  "name": "syncker",
+  "version": "1.0.0",
+  "description": "Peer-to-peer Google-Drive-like folder sync for Linux and Android, built on Hypercore",
+  "main": "index.js",
+  "scripts": {
+    "test": "node scripts/embed-ui.js && brittle-node test/*.test.js",
+    "start": "node bin/syncker.js start",
+    "prestart": "node scripts/embed-ui.js",
+    "test:bare": "node scripts/embed-ui.js && node node_modules/bare/bin/bare test/all.js",
+    "test:ui": "node scripts/embed-ui.js && node test/browser/ui.test.js && node test/browser/transfer.test.js && node test/browser/join.test.js && node test/browser/select.test.js && node test/browser/folders.test.js",
+    "stress": "node test/stress.js 100",
+    "stress:bare": "node node_modules/bare/bin/bare test/stress.js 100",
+    "postinstall": "node scripts/embed-ui.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "b4a": "^1.9.0",
+    "bare-crypto": "^1.15.4",
+    "bare-events": "^2.9.2",
+    "bare-fs": "^4.8.4",
+    "bare-http1": "^4.6.2",
+    "bare-os": "^3.9.3",
+    "bare-path": "^3.1.2",
+    "bare-process": "^4.5.1",
+    "bare-stream": "^2.13.4",
+    "bare-url": "^2.5.5",
+    "compact-encoding": "^3.5.2",
+    "corestore": "^7.15.0",
+    "hypercore-crypto": "^3.7.0",
+    "hyperdrive": "^13.3.4",
+    "hyperswarm": "^4.17.2",
+    "jsqr": "^1.4.0",
+    "localdrive": "^2.2.1",
+    "protomux": "^3.13.0",
+    "qrcode-generator": "^2.0.4",
+    "z32": "^1.1.0"
+  },
+  "bin": {
+    "syncker": "bin/syncker.js"
+  },
+  "devDependencies": {
+    "bare": "^1.36.0",
+    "bare-link": "^4.0.1",
+    "bare-pack": "^3.0.2",
+    "brittle": "^4.5.0",
+    "hyperdht": "^6.34.1"
+  },
+  "imports": {
+    "#events": {
+      "bare": "bare-events",
+      "default": "events"
+    },
+    "#crypto": {
+      "bare": "bare-crypto",
+      "default": "crypto"
+    },
+    "#fs": {
+      "bare": "bare-fs",
+      "default": "fs"
+    },
+    "#fs/promises": {
+      "bare": "bare-fs/promises",
+      "default": "fs/promises"
+    },
+    "#path": {
+      "bare": "bare-path",
+      "default": "path"
+    },
+    "#stream": {
+      "bare": "bare-stream",
+      "default": "stream"
+    },
+    "#stream/promises": {
+      "bare": "bare-stream/promises",
+      "default": "stream/promises"
+    },
+    "#http": {
+      "bare": "bare-http1",
+      "default": "http"
+    },
+    "#os": {
+      "bare": "bare-os",
+      "default": "os"
+    }
+  }
+}

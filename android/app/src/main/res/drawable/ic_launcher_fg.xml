@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The app logo (cloud with two sync arrows, as in the web UI), inside the 66dp adaptive-icon safe zone. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp" android:viewportWidth="108" android:viewportHeight="108">
+    <group android:translateX="24" android:translateY="27.75" android:scaleX="1.25" android:scaleY="1.25">
+        <path android:fillColor="#FFFFFF" android:pathData="M24 6a14 14 0 0 1 13.5 10.4A10 10 0 0 1 36 36H13a11 11 0 0 1-1.6-21.9A14 14 0 0 1 24 6z" />
+        <path android:fillColor="#1A73E8" android:pathData="M24 15.5a8.5 8.5 0 0 1 8.3 6.7l2.2-1.2-1.2 6.6-6-3 2.2-1.2A5.5 5.5 0 0 0 19 24h-3a8.5 8.5 0 0 1 8-8.5zm-8 11.4 6 3-2.2 1.2A5.5 5.5 0 0 0 29.5 27h3a8.5 8.5 0 0 1-16.5 1.7l-2.2 1.2z" />
+    </group>
+</vector>
