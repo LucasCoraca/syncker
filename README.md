@@ -5,6 +5,18 @@ server. Built on the [Hypercore protocol](https://hypercore-protocol.github.io/n
 stack using the current Holepunch modules: `hyperdrive`, `corestore`, `hyperswarm`, and the
 `bare` runtime on Android.
 
+![A shared drive in the desktop web UI](docs/screenshots/desktop-drive.png)
+
+<p align="center"><img src="docs/screenshots/phones.png" alt="The Android app: a drive, photos in dark mode, and the photo backup prompt" width="800"></p>
+
+<details><summary>More screenshots</summary>
+
+![Photos in grid view, dark mode](docs/screenshots/desktop-photos-dark.png)
+
+![Managing a drive: devices, what each one stores, and the invite QR code](docs/screenshots/desktop-manage.png)
+
+</details>
+
 - **Shared drives:** every invite is its own drive with its own folder, devices and invite. A
   device can be in several drives, for example "Work" with your laptops and "Family" with
   everyone's phones.
@@ -46,6 +58,9 @@ stack using the current Holepunch modules: `hyperdrive`, `corestore`, `hyperswar
 - **Set it remotely:** from any device you can choose what every other device of a drive
   stores, unless that device turned this off for itself.
 - Pair a phone by scanning a QR code shown on the PC
+- **Photo backup (Android, opt-in):** the app asks once whether to back up the camera folder; if
+  yes, it becomes a drive of its own, sent straight from the folder (no extra space on the phone),
+  and other devices get every new photo once they join it
 - Works over the internet: devices find each other on a global DHT and connect directly
   (UDP hole-punching), end-to-end encrypted
 - Keeps syncing in the background: systemd user service on Linux, foreground service on Android
@@ -256,3 +271,9 @@ Engine tests cover:
 
 The Android script checks phone ↔ PC sync in each background scenario: `background` (screen
 off), `recents`, `doze`, `kill`, `network`, `restricted`, `reboot`.
+
+## License
+
+Syncker is free software: you can redistribute it and/or modify it under the terms of the GNU
+General Public License as published by the Free Software Foundation, either version 3 of the
+License, or (at your option) any later version. See [LICENSE](LICENSE).
