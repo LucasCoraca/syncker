@@ -119,6 +119,22 @@
   .viewtoggle { display: flex; border: 1px solid var(--line); border-radius: 99px; overflow: hidden; flex: none; }
   .viewtoggle button { padding: 6px 14px; display: inline-flex; color: var(--muted); }
   .viewtoggle button.on { background: var(--accent-soft); color: var(--text); }
+  /* sort and filters */
+  .tools { display: flex; align-items: center; gap: 8px; padding: 4px 16px 8px 24px; overflow-x: auto; scrollbar-width: none; flex: none; }
+  .chip { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 8px 0 12px; border: 1px solid var(--faint); border-radius: 8px; font-size: 14px; color: var(--text); white-space: nowrap; flex: none; }
+  .chip:hover { background: var(--hover); }
+  .chip.on { background: var(--accent-soft); border-color: transparent; }
+  .chip .i { width: 18px; height: 18px; }
+  .chip .i:last-child { margin-left: -2px; color: var(--muted); }
+  .tools .vsep { width: 1px; height: 20px; background: var(--line); flex: none; }
+  .tools::-webkit-scrollbar { display: none; }
+  .tools .btn.text { flex: none; height: 32px; padding: 0 12px; }
+  .menu .blank { visibility: hidden; }
+  #details .info { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 6px 16px; font-size: 14px; margin: 0 0 4px; }
+  #details .info > div:nth-child(odd) { color: var(--muted); }
+  #details .info .where { display: flex; align-items: flex-start; gap: 4px; }
+  #details .info .where code { font: 12px/1.5 ui-monospace, monospace; word-break: break-all; padding-top: 2px; }
+  #details .info .where .iconbtn { margin: -8px 0 -8px auto; flex: none; }
   #banner { margin: 4px 16px 0 24px; padding: 10px 14px; border-radius: 12px; display: flex; gap: 10px; align-items: center; background: #fce8e6; color: #8c1d18; }
   @media (prefers-color-scheme: dark) { #banner { background: #601410; color: #f9dedc; } }
   #banner.info { background: var(--accent-soft); color: var(--text); }
@@ -249,7 +265,6 @@
   #hist td { padding: 8px 6px; border-top: 1px solid var(--line); }
   #details { width: min(560px, calc(100vw - 32px)); }
   #details h3 { display: flex; align-items: center; gap: 12px; word-break: break-all; }
-  #details .meta { font-size: 13px; color: var(--muted); margin: -8px 0 12px; }
   #details h4 { font-size: 13px; font-weight: 500; color: var(--muted); margin: 18px 0 6px; text-transform: uppercase; letter-spacing: .04em; }
   #details .drow { display: flex; gap: 12px; align-items: flex-start; padding: 8px 0; border-top: 1px solid var(--line); }
   #details h4 + .drow { border-top: 0; }
@@ -342,6 +357,7 @@
     #newBtn { display: none; }
     #content { border-radius: 16px 16px 0 0; }
     .head { padding: 8px 8px 4px 16px; min-height: 52px; }
+    .tools { padding: 2px 16px 8px; }
     .crumbs { font-size: 18px; }
     .scroll { padding: 0 0 120px; }
     .cols { display: none; }
@@ -397,6 +413,8 @@
     <symbol id="i-phone" viewBox="0 0 24 24"><path d="M16 1H8a2.5 2.5 0 0 0-2.5 2.5v17A2.5 2.5 0 0 0 8 23h8a2.5 2.5 0 0 0 2.5-2.5v-17A2.5 2.5 0 0 0 16 1zm-4 21a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm4.5-4h-9V4h9z"/></symbol>
     <symbol id="i-laptop" viewBox="0 0 24 24"><path d="M20 18a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2H0v2h24v-2zM4 6h16v10H4z"/></symbol>
     <symbol id="i-qr" viewBox="0 0 24 24"><path d="M3 11h8V3H3zm2-6h4v4H5zM3 21h8v-8H3zm2-6h4v4H5zm8-12v8h8V3zm6 6h-4V5h4zm0 10h2v2h-2zm-6-6h2v2h-2zm2 2h2v2h-2zm-2 2h2v2h-2zm2 2h2v2h-2zm2-2h2v2h-2zm0-4h2v2h-2zm2 2h2v2h-2z"/></symbol>
+    <symbol id="i-sort" viewBox="0 0 24 24"><path d="M3 18h6v-2H3zM3 6v2h18V6zm0 7h12v-2H3z"/></symbol>
+    <symbol id="i-drop" viewBox="0 0 24 24"><path d="m7 10 5 5 5-5z"/></symbol>
     <symbol id="i-tick" viewBox="0 0 24 24"><path d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/></symbol>
     <symbol id="i-selectall" viewBox="0 0 24 24"><path d="M3 5h2V3a2 2 0 0 0-2 2zm0 8h2v-2H3zm4 8h2v-2H7zM3 9h2V7H3zm10-6h-2v2h2zm6 0v2h2a2 2 0 0 0-2-2zM5 21v-2H3a2 2 0 0 0 2 2zm-2-4h2v-2H3zM9 3H7v2h2zm2 18h2v-2h-2zm8-8h2v-2h-2zm0 8a2 2 0 0 0 2-2h-2zm0-12h2V7h-2zm0 8h2v-2h-2zm-4 4h2v-2h-2zm0-16h2V3h-2zM7 17h10V7H7zm2-8h6v6H9z"/></symbol>
     <symbol id="i-copy" viewBox="0 0 24 24"><path d="M16 1H4a2 2 0 0 0-2 2v14h2V3h12zm3 4H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zm0 16H8V7h11z"/></symbol>
@@ -484,6 +502,7 @@
         <button id="vGrid" onclick="setLayout('grid')" aria-label="Grid view"><svg class="i"><use href="#i-grid"/></svg></button>
       </div>
     </div>
+    <div class="tools" id="tools" hidden></div>
     <div id="banner" hidden></div>
     <div class="scroll" id="scroller">
       <div id="filesWrap">
@@ -578,7 +597,7 @@
 <dialog id="fsDlg"><h3>Choose a folder</h3><p class="small" id="fsPath"></p>
   <div class="sel-list" id="fsList"></div>
   <div class="acts"><button class="btn text" id="fsNew" style="margin-right:auto">New folder</button><button class="btn text" id="fsCancel">Cancel</button><button class="btn primary" id="fsUse">Use this folder</button></div></dialog>
-<dialog id="details"><h3 id="detTitle"></h3><div class="meta" id="detMeta"></div><div id="detBody"></div><div class="acts"><form method="dialog"><button class="btn text">Close</button></form></div></dialog>
+<dialog id="details"><h3 id="detTitle"></h3><div id="detBody"></div><div class="acts"><form method="dialog"><button class="btn text">Close</button></form></div></dialog>
 <dialog id="hist"><h3 id="histTitle"></h3><div id="histBody"></div><div class="acts"><form method="dialog"><button class="btn text">Close</button></form></div></dialog>
 <input type="file" id="scanPhoto" accept="image/*" capture="environment" hidden>
 <dialog id="scanner"><video id="scanVideo" playsinline muted></video><canvas id="scanCanvas" hidden></canvas>
@@ -594,7 +613,11 @@ let mode = 'create'
 let items = []
 let shown = []
 let query = ''
-let sort = { key: 'name', asc: true }
+// One order for every folder; the photos drive keeps its own, newest first.
+let sort = { key: 'name', asc: true, folders: true }
+let camSort = { key: 'mtime', asc: false, folders: true }
+// Filters last until they are cleared, in every folder and drive.
+const filter = { type: '', avail: '', when: '' }
 let layout = 'list'
 let panelClosed = false
 const uploads = new Map() // browser uploads in flight: id -> { path, space, size, bytes, state, finished }
@@ -610,7 +633,8 @@ const drives = () => (status && status.spaces) || []
 const cur = () => drives().find((d) => d.id === space) || null
 const driveName = (id) => (drives().find((d) => d.id === id) || {}).name || ''
 try { layout = localStorage.getItem('layout') || 'list' } catch {}
-try { const s = JSON.parse(localStorage.getItem('sort')); if (s && s.key) sort = s } catch {}
+try { const s = JSON.parse(localStorage.getItem('sort')); if (s && s.key) sort = { ...s, folders: s.folders !== false } } catch {}
+try { const s = JSON.parse(localStorage.getItem('camSort')); if (s && s.key) camSort = s } catch {}
 
 function toast (msg) {
   const t = $('toast'); t.textContent = msg; t.classList.add('show')
@@ -663,12 +687,18 @@ const EXT = {
   zip: ['zip', 'tar', 'gz', '7z', 'rar', 'xz', 'bz2', 'apk'],
   code: ['js', 'ts', 'py', 'json', 'html', 'css', 'sh', 'c', 'cpp', 'h', 'rs', 'go', 'java', 'kt', 'xml', 'yml', 'yaml']
 }
+const ext = (it) => it.name.includes('.') ? it.name.split('.').pop().toLowerCase() : ''
 function kind (it) {
   if (it.dir) return 'folder'
-  const ext = it.name.includes('.') ? it.name.split('.').pop().toLowerCase() : ''
-  for (const k in EXT) if (EXT[k].includes(ext)) return k
+  const e = ext(it)
+  for (const k in EXT) if (EXT[k].includes(e)) return k
   return 'file'
 }
+const KIND_NAME = { image: 'image', video: 'video', audio: 'audio', pdf: 'document', doc: 'document', sheet: 'spreadsheet', slide: 'presentation', zip: 'archive', code: 'source file', file: 'file' }
+const typeName = (it) => it.dir ? 'Folder' : ext(it) ? ext(it).toUpperCase() + ' ' + KIND_NAME[kind(it)] : 'File'
+const filesText = (n) => n == null ? '' : n === 0 ? 'Empty' : n.toLocaleString() + (n === 1 ? ' file' : ' files')
+// Under a folder's name: how many files and how big, everything inside counted.
+const folderText = (it) => it.files ? filesText(it.files) + ' · ' + size(it.size) : filesText(it.files)
 const ficon = (it) => { const k = kind(it); return `<span class="ficon" style="color:var(--i-${k})">${ico('f-' + k, '')}</span>` }
 const itemSpace = (it) => it.space || space
 
@@ -732,6 +762,7 @@ function setNav () {
   $('manageBtn').hidden = !inDrive
   $('filesWrap').hidden = view === 'devices'
   $('devicesPage').hidden = view !== 'devices'
+  renderTools()
 }
 
 function crumbs () {
@@ -804,18 +835,108 @@ async function load () {
 }
 
 const byName = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' })
+const camView = () => view === 'files' && !!cur() && !!cur().camera
+const order = () => camView() ? camSort : sort
+const SORTS = [
+  ['name', true, 'Name (A to Z)'], ['name', false, 'Name (Z to A)'],
+  ['mtime', false, 'Newest first'], ['mtime', true, 'Oldest first'],
+  ['size', false, 'Largest first'], ['size', true, 'Smallest first'],
+  ['type', true, 'Type'], ['device', true, 'Modified by']
+]
+const sortLabel = (o) => (SORTS.find((x) => x[0] === o.key && x[1] === o.asc) || SORTS.find((x) => x[0] === o.key) || SORTS[0])[2]
+const typeKey = (it) => it.dir ? '' : kind(it) + '.' + ext(it)
 function sorted () {
-  if (view === 'recent') return items
-  const k = sort.key; const dirn = sort.asc ? 1 : -1
-  return items.slice().sort((a, b) => (b.dir - a.dir) ||
-    (k === 'name' ? byName.compare(a.name, b.name)
-      : k === 'size' ? (a.size || 0) - (b.size || 0) : (a.mtime || 0) - (b.mtime || 0)) * dirn)
+  const list = items.filter(matches)
+  if (view === 'recent') return list
+  const o = order(); const k = o.key; const dirn = o.asc ? 1 : -1
+  const by = k === 'size' ? (a, b) => (a.size || 0) - (b.size || 0)
+    : k === 'mtime' ? (a, b) => (a.mtime || 0) - (b.mtime || 0)
+      : k === 'type' ? (a, b) => byName.compare(typeKey(a), typeKey(b))
+        : k === 'device' ? (a, b) => byName.compare(a.device || '', b.device || '') : () => 0
+  return list.sort((a, b) => (o.folders ? b.dir - a.dir : 0) || (by(a, b) || byName.compare(a.name, b.name)) * dirn)
 }
 
-function setSort (key) {
-  sort = sort.key === key ? { key, asc: !sort.asc } : { key, asc: key === 'name' }
-  try { localStorage.setItem('sort', JSON.stringify(sort)) } catch {}
+// A header click flips the order of that column; the menu picks one outright.
+function setSort (key, asc) {
+  const o = order()
+  if (asc == null) asc = o.key === key ? !o.asc : !['mtime', 'size'].includes(key)
+  saveSort({ ...o, key, asc })
+}
+function saveSort (o) {
+  const cam = camView()
+  if (cam) camSort = o
+  else sort = o
+  try { localStorage.setItem(cam ? 'camSort' : 'sort', JSON.stringify(o)) } catch {}
   renderFiles()
+}
+
+const FILTERS = {
+  type: { label: 'Type', opts: [['image', 'Photos'], ['video', 'Videos'], ['audio', 'Audio'], ['docs', 'Documents'], ['zip', 'Archives']] },
+  avail: { label: 'Availability', opts: [['here', 'On this device'], ['online', 'Online only'], ['syncing', 'Syncing'], ['conflict', 'Conflicts']] },
+  when: { label: 'Modified', opts: [['today', 'Today'], ['7', 'Last 7 days'], ['30', 'Last 30 days'], ['year', 'This year']] }
+}
+const filtering = () => Object.values(filter).some(Boolean)
+function since (w) {
+  const d = new Date(); d.setHours(0, 0, 0, 0)
+  if (w === 'year') d.setMonth(0, 1)
+  else if (w !== 'today') d.setDate(d.getDate() - (+w - 1))
+  return +d
+}
+// Something is still moving for it: a transfer, or a device that has not got it yet.
+function syncing (it) {
+  const sp = itemSpace(it)
+  if (it.dir) return transfers().some((t) => moving(t) && t.space === sp && t.path && t.path.startsWith(it.path + '/'))
+  const t = transferFor(it.path, sp)
+  return !!(it.pending || it.synced === false || (t && t.state !== 'failed') || (it.copies && it.copies.missing && it.copies.missing.length) ||
+    (!it.local && !it.online))
+}
+// Folders stay so you can still go into them, unless the filter is about them too.
+function matches (it) {
+  const f = filter
+  if (f.type && !it.dir) {
+    const k = kind(it)
+    if (f.type === 'docs' ? !['pdf', 'doc', 'sheet', 'slide'].includes(k) : k !== f.type) return false
+  }
+  if (f.when && (it.mtime || 0) < since(f.when)) return false
+  if (f.avail === 'here' && (it.dir ? it.online : !it.local)) return false
+  if (f.avail === 'online' && !(it.dir ? it.online : it.online && !it.local)) return false
+  if (f.avail === 'syncing' && !syncing(it)) return false
+  if (f.avail === 'conflict' && (it.dir || !/\(conflict /.test(it.name))) return false
+  return true
+}
+function setFilter (k, v) {
+  filter[k] = v
+  renderFiles()
+}
+function clearFilters () {
+  for (const k in filter) filter[k] = ''
+  renderFiles()
+}
+
+function renderTools () {
+  const t = $('tools')
+  t.hidden = view === 'devices' || (view === 'files' && (!cur() || cur().listed === false))
+  if (t.hidden) return
+  const chip = (k) => {
+    const f = FILTERS[k]; const opt = f.opts.find((x) => x[0] === filter[k])
+    return `<button class="chip${opt ? ' on' : ''}" data-f="${k}">${opt ? ico('i-tick') : ''}${esc(opt ? opt[1] : f.label)}${ico('i-drop')}</button>`
+  }
+  t.innerHTML = (view === 'recent' ? '' : `<button class="chip" id="sortBtn" title="Sort">${ico('i-sort')}${esc(sortLabel(order()))}${ico('i-drop')}</button><span class="vsep"></span>`) +
+    Object.keys(FILTERS).map(chip).join('') + (filtering() ? '<button class="btn text" onclick="clearFilters()">Clear filters</button>' : '')
+  const at = (b) => { const r = b.getBoundingClientRect(); return [r.left, r.bottom + 4] }
+  if ($('sortBtn')) $('sortBtn').onclick = (e) => { e.stopPropagation(); sortMenu(...at($('sortBtn'))) }
+  for (const b of t.querySelectorAll('[data-f]')) b.onclick = (e) => { e.stopPropagation(); filterMenu(b.dataset.f, ...at(b)) }
+}
+function sortMenu (x, y) {
+  const o = order()
+  const e = SORTS.map(([key, asc, label]) => ({ icon: 'i-tick', blank: !(o.key === key && o.asc === asc), label, run: () => setSort(key, asc) }))
+  e.push('-', { icon: 'i-tick', blank: !o.folders, label: 'Folders first', run: () => saveSort({ ...o, folders: !o.folders }) })
+  popup(e, x, y)
+}
+function filterMenu (k, x, y) {
+  const e = FILTERS[k].opts.map(([v, label]) => ({ icon: 'i-tick', blank: filter[k] !== v, label, run: () => setFilter(k, filter[k] === v ? '' : v) }))
+  if (filter[k]) e.push('-', { icon: 'i-close', label: 'Clear', run: () => setFilter(k, '') })
+  popup(e, x, y)
 }
 
 function setLayout (l) {
@@ -839,10 +960,12 @@ function renderFiles () {
   shown = list
   prunePicked()
   renderSelbar()
-  const arrow = (k) => sort.key === k && view !== 'recent' ? `<span class="arrow">${sort.asc ? '↑' : '↓'}</span>` : ''
-  const third = view === 'files' ? 'Modified by' : 'Location'
+  renderTools()
+  const o = order()
+  const arrow = (k) => o.key === k && view !== 'recent' ? `<span class="arrow">${o.asc ? '↑' : '↓'}</span>` : ''
+  const third = view === 'files' ? `<span onclick="setSort('device')">Modified by ${arrow('device')}</span>` : '<span>Location</span>'
   $('cols').hidden = layout !== 'list' || !list.length
-  $('cols').innerHTML = `<span onclick="setSort('name')">Name ${arrow('name')}</span><span onclick="setSort('mtime')">Modified ${arrow('mtime')}</span><span>${third}</span><span onclick="setSort('size')">Size ${arrow('size')}</span><span></span>`
+  $('cols').innerHTML = `<span onclick="setSort('name')">Name ${arrow('name')}</span><span onclick="setSort('mtime')">Modified ${arrow('mtime')}</span>${third}<span onclick="setSort('size')">Size ${arrow('size')}</span><span></span>`
   const tb = $('files')
   if (moreObs) { moreObs.disconnect(); moreObs = null }
   if (!list.length) {
@@ -856,13 +979,18 @@ function renderFiles () {
       tb.innerHTML = `<div class="empty">${ico('i-clock', '')}<div class="big">Getting the list of files</div><div id="listingMsg">${listingText(cur())}</div></div>`
       return
     }
+    if (items.length && filtering()) {
+      tb.innerHTML = `<div class="empty">${ico('i-empty', '')}<div class="big">Nothing matches these filters</div><div>${items.length.toLocaleString()} item${items.length === 1 ? ' is' : 's are'} hidden here.</div>
+        <div style="margin-top:8px"><button class="btn" onclick="clearFilters()">Clear filters</button></div></div>`
+      return
+    }
     const msg = view === 'search' ? ['No results', 'Try a different name.']
       : view === 'recent' ? ['No recent files', 'Files you add or change on any device show up here.']
         : ['Nothing here yet', 'Drop files here, or use the New button.']
     tb.innerHTML = `<div class="empty">${ico('i-empty', '')}<div class="big">${msg[0]}</div><div>${msg[1]}</div></div>`
     return
   }
-  const third3 = (it) => view === 'files' ? esc(it.device || '') : esc((it.spaceName || '') + (parent(it.path) === '/' ? '' : ' › ' + parent(it.path).slice(1).split('/').join(' › ')))
+  const third3 = (it) => view === 'files' ? esc(it.dir ? filesText(it.files) : it.device || '') : esc((it.spaceName || '') + (parent(it.path) === '/' ? '' : ' › ' + parent(it.path).slice(1).split('/').join(' › ')))
   const off = (it) => (it.online && !it.local ? ' offline' : '') + (picked.has(pk(it)) ? ' sel' : '')
   const pick = (it) => `<span class="pickwrap">${ficon(it)}<span class="pick" data-pick role="checkbox" aria-label="Select">${ico('i-tick', '')}</span></span>`
   // Big folders (a camera roll) are drawn a page at a time, more as you scroll.
@@ -871,15 +999,15 @@ function renderFiles () {
       <div class="card ${it.dir ? 'folder' : ''}${off(it)}" data-i="${i}" data-path="${esc(it.path)}">
         <div class="top">${pick(it)}<span class="t" title="${esc(it.name)}">${esc(it.name)}</span><button class="iconbtn" data-more="${i}" aria-label="More">${ico('i-more')}</button></div>
         <div class="thumb">${thumb(it)}</div>
-        <div class="foot"><span class="st">${stateHtml(it)}</span><span style="margin-left:auto">${it.dir ? '' : size(it.size)}</span></div>
+        <div class="foot"><span class="st">${stateHtml(it)}</span><span style="margin-left:auto">${it.dir ? folderText(it) : size(it.size)}</span></div>
         <div class="pb" style="padding:0 8px 6px">${barHtml(it)}</div>
       </div>` : `
       <div class="row${off(it)}" data-i="${i}" data-path="${esc(it.path)}">
         <div class="cell-name">${pick(it)}<div class="fname"><span class="t" title="${esc(it.name)}">${esc(it.name)}${/\(conflict /.test(it.name) ? '<span class="tag">conflict</span>' : ''}<span class="st">${stateHtml(it)}</span></span>
-          <div class="sub"><span class="st">${stateHtml(it)}</span><span>${[it.dir ? '' : size(it.size), when(it.mtime)].filter(Boolean).join(' · ')}</span></div><div class="pb">${barHtml(it)}</div></div></div>
+          <div class="sub"><span class="st">${stateHtml(it)}</span><span>${[it.dir ? folderText(it) : size(it.size), when(it.mtime)].filter(Boolean).join(' · ')}</span></div><div class="pb">${barHtml(it)}</div></div></div>
         <div class="cell">${when(it.mtime)}</div>
         <div class="cell">${third3(it)}</div>
-        <div class="cell">${it.dir ? '—' : size(it.size)}</div>
+        <div class="cell"${it.dir && it.files ? ` title="${filesText(it.files)}"` : ''}>${it.dir ? (it.files ? size(it.size) : '—') : size(it.size)}</div>
         <div><button class="iconbtn" data-more="${i}" aria-label="More">${ico('i-more')}</button></div>
       </div>`
   const key = [view, space, dir, query, layout].join('\0')
@@ -1185,7 +1313,7 @@ function popup (entries, x, y) {
   closeMenu()
   const m = document.createElement('div')
   m.className = 'menu'
-  m.innerHTML = entries.map((e, i) => e === '-' ? '<hr>' : `<button data-k="${i}" class="${e.danger ? 'danger' : ''}">${ico(e.icon)}${esc(e.label)}</button>`).join('')
+  m.innerHTML = entries.map((e, i) => e === '-' ? '<hr>' : `<button data-k="${i}" class="${e.danger ? 'danger' : ''}">${ico(e.icon, e.blank ? 'i blank' : 'i')}${esc(e.label)}</button>`).join('')
   document.body.appendChild(m)
   const r = m.getBoundingClientRect()
   m.style.left = Math.max(8, Math.min(x - (x > innerWidth / 2 ? r.width : 0), innerWidth - r.width - 8)) + 'px'
@@ -1229,7 +1357,7 @@ function itemMenu (it, x, y) {
   if (!it.pending) {
     e.push('-')
     if (here) e.push({ icon: 'i-edit', label: 'Rename', run: () => act('rename', it) })
-    if (!it.dir) e.push({ icon: 'i-info', label: 'Sync details', run: () => showDetails(it) })
+    e.push({ icon: 'i-info', label: 'Details', run: () => showDetails(it) })
     if (!it.dir) e.push({ icon: 'i-history', label: 'Version history', run: () => act('history', it) })
     e.push('-')
     e.push({ icon: 'i-trash', label: 'Delete from all devices', danger: true, run: () => act('delete', it) })
@@ -1255,7 +1383,7 @@ function newMenu (btn) {
 
 // ---- dialogs ----
 
-// Sync details: what is happening with one file, here and on every device.
+// Details: what it is, and what is happening with it here and on every device.
 let detItem = null
 let detTimer = null
 let detBusy = false
@@ -1264,7 +1392,6 @@ function showDetails (it) {
   detItem = it
   $('detTitle').innerHTML = ficon(it) + '<span></span>'
   $('detTitle').lastChild.textContent = it.name
-  $('detMeta').textContent = ''
   $('detBody').innerHTML = '<p class="small">Loading…</p>'
   $('details').showModal()
   refreshDetails(true)
@@ -1307,12 +1434,38 @@ function detRow (name, x, icon) {
   const bar = pct ? `<div class="bar"><i style="width:${x.percent}%"></i></div>` : x.state === 'saving' ? '<div class="bar indet"><i></i></div>' : ''
   return `<div class="drow ${cls}">${ico(ic)}<div style="flex:1;min-width:0"><div class="dname">${ico(icon)}<span>${esc(name)}</span></div><div class="dtext">${esc(x.text)}</div>${bar}${sub.length ? `<div class="dsub">${esc(sub.join(' · '))}</div>` : ''}</div></div>`
 }
+const fullDate = (t) => new Date(t).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })
+// What it is and where: the top of the details dialog.
+function infoHtml (it, d) {
+  const rows = [['Type', typeName(it)]]
+  if (d.dir) {
+    rows.push(['Contains', d.files ? filesText(d.files) + (d.folders ? ` in ${d.folders.toLocaleString()} folder${d.folders === 1 ? '' : 's'}` : '') : 'Empty'])
+    if (d.files) rows.push(['Size', size(d.size)])
+    if (d.files) rows.push(['On this device', d.online && !d.here ? 'Online only' : d.here === d.files ? 'All files' : `${filesText(d.here)} of ${d.files.toLocaleString()} (${size(d.hereSize)})`])
+    if (d.mtime) rows.push(['Modified', fullDate(d.mtime) + ' (its newest file)'])
+  } else {
+    if (d.size != null) rows.push(['Size', size(d.size) + (d.size >= 1024 ? ` (${d.size.toLocaleString()} bytes)` : '')])
+    if (d.mtime) rows.push(['Modified', fullDate(d.mtime) + (d.author ? ' on ' + d.author : '')])
+  }
+  if (d.created) rows.push(['Created here', fullDate(d.created)])
+  const drive = drives().find((x) => x.id === itemSpace(it))
+  if (drive) rows.push(['In', esc(drive.name) + (parent(it.path) === '/' ? '' : ' › ' + parent(it.path).slice(1).split('/').map(esc).join(' › ')), true])
+  if (d.where) rows.push(['Location', `<span class="where"><code id="detWhere">${esc(d.where)}</code><button class="iconbtn" onclick="copyWhere()" title="Copy location" aria-label="Copy location">${ico('i-copy')}</button></span>`, true])
+  return '<div class="info">' + rows.map(([k, v, html]) => `<div>${k}</div><div>${html ? v : esc(v)}</div>`).join('') + '</div>'
+}
+function copyWhere () {
+  const el = $('detWhere')
+  ;(navigator.clipboard ? navigator.clipboard.writeText(el.textContent) : Promise.reject(new Error())).then(() => toast('Location copied'), () => {
+    const r = document.createRange(); r.selectNodeContents(el)
+    getSelection().removeAllRanges(); getSelection().addRange(r); toast('Select and copy the location')
+  })
+}
 function renderDetails (d) {
   const guess = (name) => /^(SM-|Pixel|moto|Redmi|M2|CPH|RMX|Galaxy|iPhone|phone|android)/i.test(name) ? 'i-phone' : 'i-laptop'
-  $('detMeta').textContent = [d.size != null ? size(d.size) : '', d.author ? 'last changed on ' + d.author : '', d.mtime ? when(d.mtime) : ''].filter(Boolean).join(' · ')
+  if (d.dir) { $('detBody').innerHTML = infoHtml(detItem, d); return }
   const ok = d.devices.filter((x) => x.state === 'synced').length + (d.here.state === 'synced' ? 1 : 0)
   const total = d.devices.length + 1
-  let html = `<p class="small" style="margin:0 0 4px">${ok} of ${total} device${total === 1 ? ' has' : 's have'} the latest version${d.hash ? ` <span title="SHA-256 ${esc(d.hash)}">(SHA-256 ${esc(d.hash.slice(0, 12))}…)</span>` : ''}</p>`
+  let html = infoHtml(detItem, d) + `<h4>Sync</h4><p class="small" style="margin:0 0 4px">${ok} of ${total} device${total === 1 ? ' has' : 's have'} the latest version${d.hash ? ` <span title="SHA-256 ${esc(d.hash)}">(SHA-256 ${esc(d.hash.slice(0, 12))}…)</span>` : ''}</p>`
   html += '<h4>This device</h4>' + detRow((status.device || 'This device') + ' (this device)', d.here, status.platform === 'android' ? 'i-phone' : 'i-laptop')
   if (d.devices.length) html += '<h4>Other devices</h4>' + d.devices.map((x) => detRow(x.name, x, guess(x.name))).join('')
   if (d.activity.length) html += '<h4>Activity (since Syncker started)</h4>' + d.activity.map((a) => `<div class="act"><time>${esc(ago(a.at))}</time><span>${esc(a.text)}</span></div>`).join('')

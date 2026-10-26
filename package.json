@@ -1,6 +1,6 @@
 {
   "name": "syncker",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Peer-to-peer Google-Drive-like folder sync for Linux and Android, built on Hypercore",
   "main": "index.js",
   "scripts": {
@@ -8,7 +8,7 @@
     "start": "node bin/syncker.js start",
     "prestart": "node scripts/embed-ui.js",
     "test:bare": "node scripts/embed-ui.js && node node_modules/bare/bin/bare test/all.js",
-    "test:ui": "node scripts/embed-ui.js && node test/browser/ui.test.js && node test/browser/transfer.test.js && node test/browser/join.test.js && node test/browser/select.test.js && node test/browser/folders.test.js",
+    "test:ui": "node scripts/embed-ui.js && node test/browser/ui.test.js && node test/browser/transfer.test.js && node test/browser/join.test.js && node test/browser/select.test.js && node test/browser/folders.test.js && node test/browser/sort.test.js",
     "stress": "node test/stress.js 100",
     "stress:bare": "node node_modules/bare/bin/bare test/stress.js 100",
     "postinstall": "node scripts/embed-ui.js"

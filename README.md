@@ -44,6 +44,9 @@ stack using the current Holepunch modules: `hyperdrive`, `corestore`, `hyperswar
 - **Select several files at once:** Ctrl/Cmd+click, Shift+click for a range, Ctrl+A, or the tick
   box on each file; long press on a phone. The selection bar then downloads, keeps on this device,
   removes from this device or deletes them all in one go (also from the right-click menu).
+- **Sort and filter:** by name, date, size, type or the device that changed it (the photos drive
+  starts newest first), and filter by type, by what is on this device, online only, syncing or in
+  conflict, or by date. Folders show how many files they hold and their total size.
 - **Choose folders in a tree:** making a drive from a folder that already has files opens a tree
   of its folders (no file names, sizes counted as you look) to tick what is shared; joining a
   drive opens the same tree to tick what this device keeps, with how much that is next to the free
@@ -51,9 +54,10 @@ stack using the current Holepunch modules: `hyperdrive`, `corestore`, `hyperswar
 - **Big drives ask first:** after joining a drive, nothing downloads until its size is known. A
   drive under 1 GB (that takes at most half the free space) syncs everything on its own; a bigger
   one asks: sync everything, choose folders, or keep it online only. The CLI syncs everything.
-- **Sync details for every file:** which step it is in on this device (reading, storing in the
-  drive, waiting for another device, downloading with speed and time left, saving), and whether
-  each other device has it, is receiving it, has an older version or is offline, how each device is
+- **Details for every file and folder:** type, size, dates, where it is on this device (with a
+  copy button), what a folder holds and how much of it is here. For files also which step it is in
+  on this device (reading, storing in the drive, waiting for another device, downloading with
+  speed and time left, saving), and whether each other device has it, is receiving it, has an older version or is offline, how each device is
   connected (local network, VPN, internet), plus a short activity log.
 - **Set it remotely:** from any device you can choose what every other device of a drive
   stores, unless that device turned this off for itself.

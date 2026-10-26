@@ -258,6 +258,23 @@ httpTest('big folders list quickly; photos get the small preview stored in them'
   const top = await (await fetch(`${url}/api/list?space=${d.id}&dir=/`)).json()
   t.is(top.items.length, 1)
   t.is(top.items[0].dir, true)
+  let bytes = 0
+  for (const f of await fs.readdir(cam, { recursive: true })) {
+    const st = await fs.stat(path.join(cam, f))
+    if (st.isFile()) bytes += st.size
+  }
+  t.is(top.items[0].files, 2003, 'a folder counts every file inside it')
+  t.is(top.items[0].size, bytes, 'and their total size')
+
+  const det = await (await fetch(`${url}/api/details?space=${d.id}&path=/Camera`)).json()
+  t.is(det.dir, true, 'details of a folder')
+  t.is(det.files, 2003)
+  t.is(det.folders, 1, 'one folder inside')
+  t.is(det.here, 2003, 'all of it on this device')
+  t.is(det.where, cam, 'where it is on this device')
+  const fdet = await (await fetch(`${url}/api/details?space=${d.id}&path=/Camera/Old/a.txt`)).json()
+  t.is(fdet.where, path.join(cam, 'Old', 'a.txt'))
+  t.is(fdet.size, 3)
 
   const r = await fetch(`${url}/api/thumb?space=${d.id}&path=/Camera/cam.jpg`)
   t.is(r.headers.get('content-type'), 'image/jpeg')
