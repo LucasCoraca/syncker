@@ -76,6 +76,7 @@ class MainActivity : ComponentActivity(), Host {
     override fun onResume() {
         super.onResume()
         if (prefs.getBoolean("asked_storage", false)) checkLostStorage()
+        if (started) { model.resumeUpdate(); model.autoCheck() }
     }
 
     /** Sync is paused if the folder is in shared storage and access was revoked. */
@@ -307,6 +308,12 @@ class MainActivity : ComponentActivity(), Host {
     override fun share(text: String) {
         val send = Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, text)
         try { startActivity(Intent.createChooser(send, "Share invite")) } catch (_: ActivityNotFoundException) {}
+    }
+
+    override fun allowInstalls() {
+        try {
+            startActivity(Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:$packageName")))
+        } catch (_: ActivityNotFoundException) {}
     }
 
     override fun exit() { moveTaskToBack(true) }

@@ -166,6 +166,8 @@ private fun DrawerBody(m: AppModel) {
                 Small("${size(bytes)} in ${count(m.drives.size, "1 drive", "drives")}")
                 Gap(8.dp)
                 Small("This device: ${m.status?.device ?: ""}")
+                Gap(8.dp)
+                Small("Syncker ${m.version} · Check for updates", Modifier.clip(RoundedCornerShape(4.dp)).clickable { m.drawerOpen = false; m.checkUpdate(true) }.padding(vertical = 4.dp), color = colors.accent)
             }
         }
     }

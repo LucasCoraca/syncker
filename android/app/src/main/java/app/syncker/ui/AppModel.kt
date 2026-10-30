@@ -7,7 +7,10 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import app.syncker.Updater
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -44,6 +47,8 @@ interface Host {
     fun scanQr(onResult: (String?) -> Unit)
     fun copy(label: String, text: String)
     fun share(text: String)
+    /** Settings → Install unknown apps, for Syncker. */
+    fun allowInstalls()
     fun exit()
 }
 
@@ -59,6 +64,7 @@ sealed class Dialog {
     class Choose(val space: String? = null, val device: String? = null, val disk: DiskChoice? = null) : Dialog()
     class Menu(val item: Item) : Dialog()
     object Transfers : Dialog()
+    class Update(val update: Updater.Update, val start: Boolean = false) : Dialog()
 }
 
 /** A new drive made from a folder that already has files: which of them it shares. */
@@ -69,6 +75,8 @@ private val DEV_IGNORE = listOf("node_modules", ".git", "build", ".gradle", ".cx
 
 class AppModel(context: Context, private val scope: CoroutineScope, val host: Host) {
     val api = Api(context)
+    private val ctx = context.applicationContext
+    val version = Updater.current(context)
     private val prefs = context.getSharedPreferences("syncker-ui", Context.MODE_PRIVATE)
 
     var status by mutableStateOf<Status?>(null)
@@ -119,6 +127,60 @@ class AppModel(context: Context, private val scope: CoroutineScope, val host: Ho
         return try { JSONObject(j).let { Sort(it.optString("key", def.key), it.optBoolean("asc", def.asc), it.optBoolean("folders", true)) } } catch (_: Exception) { def }
     }
 
+    // ---- new versions ----
+
+    /** Bytes of the update downloaded so far, while it downloads. */
+    var updating by mutableStateOf<Long?>(null)
+    private var checking = false
+    private var autoChecked = false
+    /** An update waiting for the user to allow installing apps in Settings. */
+    private var waitingUpdate: Updater.Update? = null
+
+    /** Looks for a new version now and then (once set up, and when the app comes back). */
+    fun autoCheck() { if (status?.configured == true && Updater.due(ctx)) checkUpdate(false) }
+
+    /** Back from Settings: carry on with the update if installing is now allowed. */
+    fun resumeUpdate() {
+        val u = waitingUpdate ?: return
+        waitingUpdate = null
+        if (Updater.allowed(ctx)) show(Dialog.Update(u, start = true))
+    }
+
+    fun checkUpdate(manual: Boolean) {
+        if (checking || dialogs.any { it is Dialog.Update }) return
+        checking = true
+        scope.launch {
+            try {
+                val u = withContext(Dispatchers.IO) { Updater.check(ctx, manual) }
+                if (u != null) show(Dialog.Update(u)) else if (manual) toast("Syncker is up to date ($version)")
+            } catch (e: Exception) {
+                if (manual) toast("Couldn't check for updates: ${e.message ?: "no connection"}")
+            } finally { checking = false }
+        }
+    }
+
+    fun skipUpdate(u: Updater.Update) = Updater.skip(ctx, u.version)
+
+    fun installUpdate(u: Updater.Update, done: () -> Unit) = scope.launch {
+        if (!Updater.allowed(ctx)) {
+            waitingUpdate = u
+            done()
+            toast("Allow Syncker to install apps, then come back to update")
+            host.allowInstalls()
+            return@launch
+        }
+        updating = 0
+        try {
+            withContext(Dispatchers.IO) {
+                val apk = Updater.download(ctx, u) { b -> updating = b }
+                Updater.install(ctx, apk)
+            }
+            done()
+        } catch (e: Exception) {
+            toast("Couldn't download the update: ${e.message ?: "no connection"}")
+        } finally { updating = null }
+    }
+
     // ---- live status ----
 
     private var lastKey = ""
@@ -131,6 +193,7 @@ class AppModel(context: Context, private val scope: CoroutineScope, val host: Ho
                 connected = true
                 val first = status == null || status?.configured != true
                 onStatus(Status.of(j))
+                if (!autoChecked && status?.configured == true) { autoChecked = true; autoCheck() }
                 if (status?.configured != true) return@collect
                 // Reload the listing only when files may have changed, not on every progress tick.
                 val key = drives.joinToString(";") { d ->

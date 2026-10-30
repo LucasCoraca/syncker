@@ -63,6 +63,7 @@ fun Dialogs(m: AppModel) {
             is Dialog.Browse -> BrowseDialog(m, d, close)
             is Dialog.Choose -> ChooseDialog(m, d, close)
             is Dialog.Transfers -> TransfersSheet(m, close)
+            is Dialog.Update -> UpdateDialog(m, d.update, d.start, close)
         }
     }
 }
@@ -440,3 +441,38 @@ fun Pill(text: String) = Text(text, Modifier.clip(RoundedCornerShape(99.dp)).bac
 
 @Composable
 fun Spaced(content: @Composable () -> Unit) = Column(verticalArrangement = Arrangement.spacedBy(8.dp)) { content() }
+
+/** A new version on GitHub: what's new, and install it over this one (drives are kept). */
+@Composable
+private fun UpdateDialog(m: AppModel, u: app.syncker.Updater.Update, start: Boolean, close: () -> Unit) {
+    val got = m.updating
+    LaunchedEffect(Unit) { if (start) m.installUpdate(u, close) }
+    AlertDialog(
+        onDismissRequest = { if (got == null) close() },
+        icon = { Logo(36.dp) },
+        title = { Text("Update available") },
+        text = {
+            Column {
+                Text("Syncker ${u.version} is ready to install. You have ${m.version}. Your drives and files stay as they are.", fontSize = 14.sp, color = colors.muted)
+                if (u.notes.isNotEmpty()) {
+                    Text("What's new", Modifier.padding(top = 16.dp, bottom = 4.dp), fontWeight = FontWeight.Medium)
+                    Column(Modifier.heightIn(max = 260.dp).verticalScroll(rememberScrollState())) {
+                        for (line in u.notes.lines()) Text(line, Modifier.padding(vertical = 3.dp), fontSize = 14.sp)
+                    }
+                }
+                if (got != null) {
+                    val pct = if (u.size > 0) got.toFloat() / u.size else 0f
+                    Text("Downloading… ${(pct * 100).toInt()}% of ${size(u.size)}", Modifier.padding(top = 16.dp, bottom = 6.dp), fontSize = 14.sp)
+                    LinearProgressIndicator({ pct }, Modifier.fillMaxWidth(), color = colors.accent, trackColor = colors.line)
+                }
+            }
+        },
+        confirmButton = { TextButton({ m.installUpdate(u, close) }, enabled = got == null) { Text("Install") } },
+        dismissButton = {
+            Row {
+                TextButton({ m.skipUpdate(u); close() }, enabled = got == null) { Text("Skip this version") }
+                TextButton(close, enabled = got == null) { Text("Later") }
+            }
+        }
+    )
+}

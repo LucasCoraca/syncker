@@ -197,6 +197,12 @@ Background behavior (tested on an Android 14 emulator, see below):
 - An allow-while-idle alarm every ~15 min checks for peers during deep sleep.
 - A network callback re-announces as soon as connectivity returns.
 
+**Updates:** the app checks the latest GitHub release when it opens (at most twice a day) and, if
+there's a newer version, offers to install it: **Install**, **Later** or **Skip this version**. The
+drawer has **Check for updates** too. The APK for the phone's CPU is downloaded from the release and
+handed to Android's installer, which asks you to confirm (and, the first time, to allow Syncker to
+install apps). Your drives are kept.
+
 If "All files access" is later revoked, sync pauses with "Paused: tap to allow file access" and
 nothing is deleted. Some vendors (Xiaomi, Huawei, some Samsung modes) also kill background apps
 on their own. Allow Syncker in their battery settings.
@@ -235,6 +241,8 @@ Devices don't need to be on the same network. Things to know:
   off. This never deletes files from the drive.
 - The web UI has no login and binds to `127.0.0.1`. It rejects cross-origin requests and foreign
   Host headers (DNS rebinding). Don't use `--host 0.0.0.0` on an untrusted network.
+- The Android app contacts `api.github.com` to look for a new version (when it opens, at most
+  twice a day). Android only installs an update signed with the same key as the installed app.
 - On Android nothing listens on the network: the engine's API is a socket file in the app's
   private folder, so other apps on the phone can't reach your files or invites through it.
 - Data from other devices is validated: paths can't escape the folder, metadata is type-checked,
