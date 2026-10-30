@@ -1,8 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <network-security-config>
-    <!-- The UI is served by the in-app sync engine over loopback only. -->
-    <domain-config cleartextTrafficPermitted="true">
-        <domain includeSubdomains="false">127.0.0.1</domain>
-        <domain includeSubdomains="false">localhost</domain>
-    </domain-config>
+    <!-- No plain HTTP anywhere: the UI reaches the engine over a private socket
+         file (LocalApi), not the network. -->
+    <base-config cleartextTrafficPermitted="false" />
 </network-security-config>

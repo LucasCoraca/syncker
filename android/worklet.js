@@ -1,6 +1,7 @@
 // Android entry point, runs inside the Bare worklet started by SyncService.
-// Args (from Kotlin): <home> <folders> <defaultName> <port> <bootstrap host:port,...|-> <sharedRoot> <storageOk 1|0>
+// Args (from Kotlin): <home> <folders> <defaultName> <socket> <bootstrap host:port,...|-> <sharedRoot> <storageOk 1|0>
 //   <folders>: preferred default folders, newline separated (first writable wins)
+//   <socket>: the API's socket file, in the app's private folder (no port: other apps can't reach it)
 //   <sharedRoot>/<storageOk>: shared storage root and whether we hold "All files access"
 // Talks to Kotlin over BareKit.IPC with newline-delimited JSON:
 //   worklet -> native: { type: 'status', title, text, progress (0-100 or -1), configured, folders: { driveId: folder }, busy }
@@ -10,7 +11,7 @@
 /* global Bare, BareKit */
 import { App } from '../lib/app.js'
 
-const [home, defaultFolder, defaultName, port, bootstrap, sharedRoot, storageArg] = Bare.argv.slice(-7)
+const [home, defaultFolder, defaultName, socket, bootstrap, sharedRoot, storageArg] = Bare.argv.slice(-7)
 
 // Without "All files access" Android still shows the files this app created,
 // but hides everyone else's: the folder would look partly deleted. Pause.
@@ -27,8 +28,7 @@ const app = new App({
   home,
   defaultFolder: defaultFolder.split('\n'),
   defaultName,
-  port: Number(port),
-  host: '127.0.0.1',
+  socket,
   platform: 'android',
   folderGuard,
   cameraFolder: [sharedRoot + '/DCIM/Camera', sharedRoot + '/Pictures'],
@@ -143,7 +143,7 @@ Bare.on('suspend', () => {}) // we keep running in the foreground service
 Bare.on('teardown', () => app.close())
 
 app.start().then(() => {
-  send({ type: 'ready', port: app.server.address().port })
+  send({ type: 'ready' })
   report()
 }, (err) => {
   send({ type: 'fatal', message: String(err && err.stack) })

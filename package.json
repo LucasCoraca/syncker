@@ -1,6 +1,6 @@
 {
   "name": "syncker",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Peer-to-peer Google-Drive-like folder sync for Linux and Android, built on Hypercore",
   "main": "index.js",
   "scripts": {
@@ -25,6 +25,7 @@
     "bare-http1": "^4.6.2",
     "bare-os": "^3.9.3",
     "bare-path": "^3.1.2",
+    "bare-pipe": "^4.4.0",
     "bare-process": "^4.5.1",
     "bare-stream": "^2.13.4",
     "bare-url": "^2.5.5",
@@ -85,6 +86,10 @@
     "#os": {
       "bare": "bare-os",
       "default": "os"
+    },
+    "#pipe": {
+      "bare": "bare-pipe",
+      "default": "./lib/node-pipe.js"
     }
   }
 }

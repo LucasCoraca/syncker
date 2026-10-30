@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Builds the Android APKs: embeds the UI, bundles the worklet with bare-pack,
+# Builds the Android APKs: embeds the UI, writes the app icons, bundles the worklet with bare-pack,
 # links native addons with bare-link, then runs Gradle.
 #   ANDROID_HOME (or android/local.properties) must point at an SDK with NDK 29.
 #   JAVA_HOME must be a JDK 17.
@@ -7,6 +7,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 node scripts/embed-ui.js
+node scripts/icons-kt.js
 node node_modules/bare-pack/bin.js --preset android --linked --out android/app/src/main/assets/syncker.bundle android/worklet.js
 node node_modules/bare-link/bin.js --preset android --out android/app/src/main/jniLibs android/worklet.js
 

@@ -13,7 +13,7 @@ import java.io.FileNotFoundException
 
 /**
  * One file the camera app writes its photo to (a picture of an invite QR code),
- * read back by the page: content://app.syncker.photo/scan.jpg
+ * read back by the app: content://app.syncker.photo/scan.jpg
  */
 class PhotoProvider : ContentProvider() {
     companion object {

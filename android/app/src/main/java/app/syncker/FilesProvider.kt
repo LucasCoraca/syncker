@@ -11,8 +11,6 @@ import android.provider.OpenableColumns
 import android.webkit.MimeTypeMap
 import java.io.File
 import java.io.FileNotFoundException
-import java.net.HttpURLConnection
-import java.net.URL
 import org.json.JSONObject
 
 /**
@@ -69,25 +67,24 @@ class FilesProvider : ContentProvider() {
         return stream(t)
     }
 
-    // Online-only: pipe the download from the local server to the viewer.
+    // Online-only: pipe the download from the engine to the viewer.
     private fun stream(t: Target): ParcelFileDescriptor {
-        val url = URL("http://127.0.0.1:${SyncService.PORT}/api/file?space=" + Uri.encode(t.space) + "&path=" + Uri.encode("/" + t.rel))
-        val conn = url.openConnection() as HttpURLConnection
-        conn.connectTimeout = 5000
-        conn.readTimeout = 60000
-        if (conn.responseCode != 200) {
-            conn.disconnect()
+        val res = try {
+            LocalApi.request(context!!, "GET", "/api/file?space=" + Uri.encode(t.space) + "&path=" + Uri.encode("/" + t.rel))
+        } catch (e: java.io.IOException) {
+            throw FileNotFoundException("not available: Syncker is not running")
+        }
+        if (res.status != 200) {
+            res.body.close()
             throw FileNotFoundException("not available: no device that has it is online")
         }
         val pipe = ParcelFileDescriptor.createReliablePipe()
         Thread {
             ParcelFileDescriptor.AutoCloseOutputStream(pipe[1]).use { out ->
                 try {
-                    conn.inputStream.use { it.copyTo(out) }
+                    res.body.use { it.copyTo(out) }
                 } catch (e: Exception) {
                     pipe[1].closeWithError(e.message ?: "download failed")
-                } finally {
-                    conn.disconnect()
                 }
             }
         }.start()

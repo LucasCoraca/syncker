@@ -22,11 +22,12 @@ stack using the current Holepunch modules: `hyperdrive`, `corestore`, `hyperswar
   everyone's phones.
 - A normal folder per drive on every device: `~/Syncker` and `~/Syncker - <drive>` on Linux,
   `Internal storage/Syncker…` on Android (visible to the gallery and file managers)
-- A Google-Drive-style web UI:
+- A Google-Drive-style UI:
   - browse, upload files and folders, rename, delete, search, recent files, list and grid views
   - version history and live progress for every transfer (percent, speed, time left, which
     device), including in the Android notification
-  - `http://127.0.0.1:7777` on Linux; the Android app shows the same UI
+  - a web UI at `http://127.0.0.1:7777` on Linux, and a native app on Android with the same
+    screens
 - **Choose what to sync:** any folder or file (or a whole drive) can be online only on a device.
   It stays listed and opens on demand from another device, but takes no space. "Remove from this
   device" frees the space and keeps the file everywhere else; "Delete from all devices" deletes it.
@@ -141,8 +142,10 @@ stack using the current Holepunch modules: `hyperdrive`, `corestore`, `hyperswar
      batch cork while it waits for data from the same connection.
 
 Code: `lib/engine.js` (sync), `lib/app.js` (setup + lifecycle), `lib/web.js` + `lib/ui.html` (UI
-and API), `bin/syncker.js` (Linux CLI), `android/` (Kotlin app + `worklet.js` running the same
-engine in Bare). `package.json` `imports` maps `#fs`, `#crypto`, … to Node or Bare modules.
+and API), `bin/syncker.js` (Linux CLI), `android/` (Kotlin app with Jetpack Compose screens in
+`app.syncker.ui`, + `worklet.js` running the same engine in Bare). On Android the API listens on
+a socket file in the app's private folder instead of a port, and the app talks to it there
+(`LocalApi.kt`). The app's icons are generated from the web UI's (`scripts/icons-kt.js`). `package.json` `imports` maps `#fs`, `#crypto`, … to Node or Bare modules.
 
 ## Linux
 
@@ -175,7 +178,7 @@ after it, and its sync data is reused.
 ## Android
 
 Install the APK for your phone's CPU (`app-arm64-v8a-release.apk` for nearly all phones,
-about 24 MB), or build it yourself (below). On first launch, the app asks for:
+about 25 MB), or build it yourself (below). On first launch, the app asks for:
 
 1. **All files access**, so the folder can live in `Internal storage/Syncker`. If you skip it,
    files stay in the app's own folder.
@@ -232,6 +235,8 @@ Devices don't need to be on the same network. Things to know:
   off. This never deletes files from the drive.
 - The web UI has no login and binds to `127.0.0.1`. It rejects cross-origin requests and foreign
   Host headers (DNS rebinding). Don't use `--host 0.0.0.0` on an untrusted network.
+- On Android nothing listens on the network: the engine's API is a socket file in the app's
+  private folder, so other apps on the phone can't reach your files or invites through it.
 - Data from other devices is validated: paths can't escape the folder, metadata is type-checked,
   and gossiped peer lists are capped.
 

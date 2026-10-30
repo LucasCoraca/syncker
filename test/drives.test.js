@@ -138,6 +138,11 @@ test('photo backup: asked once, the camera folder syncs as its own drive, half-w
   await until(() => exists(path.join(got.folder, 'IMG_3.jpg')), 30000, 'new photo on the laptop')
   t.is(await read(path.join(got.folder, 'IMG_3.jpg')), 'new photo')
   t.absent(await exists(path.join(got.folder, '.pending-1700000000-IMG_2.jpg')), 'photo still being written is not synced')
+  if (typeof fetch === 'function') {
+    await fs.mkdir(path.join(camera, '.thumbnails'))
+    const list = await (await fetch(`http://127.0.0.1:${phone.server.address().port}/api/list?space=${cam.id}&dir=/`)).json()
+    t.alike(list.items.map((it) => it.name).sort(), ['IMG_1.jpg', 'IMG_3.jpg'], 'what it does not sync is not listed either')
+  }
 
   await phone.close()
   const again = new App(opts)

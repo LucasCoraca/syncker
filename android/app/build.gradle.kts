@@ -12,8 +12,8 @@ android {
         applicationId = "app.syncker"
         minSdk = 29
         targetSdk = 34
-        versionCode = 2
-        versionName = "1.1.0"
+        versionCode = 3
+        versionName = "1.2.0"
     }
 
     splits {
@@ -27,7 +27,10 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            // Compose is big; R8 drops what the app doesn't use.
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
             // Debug signing so the release APK installs without a keystore; replace for store builds.
             signingConfig = signingConfigs.getByName("debug")
         }
@@ -40,6 +43,13 @@ android {
     kotlinOptions {
         jvmTarget = "17"
     }
+    // The app's screens are Jetpack Compose (versions as cached for offline builds).
+    buildFeatures {
+        compose = true
+    }
+    composeOptions {
+        kotlinCompilerExtensionVersion = "1.5.14"
+    }
     packaging {
         jniLibs {
             // Compress native libs in the APK (bare-kit embeds V8: ~65 MB raw,
@@ -51,4 +61,10 @@ android {
 
 dependencies {
     implementation(files("libs/bare-kit.jar"))
+    implementation(platform("androidx.compose:compose-bom:2024.09.00"))
+    implementation("androidx.compose.ui:ui")
+    implementation("androidx.compose.foundation:foundation")
+    implementation("androidx.compose.material3:material3")
+    implementation("androidx.activity:activity-compose:1.9.2")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
 }

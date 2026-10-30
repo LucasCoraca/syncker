@@ -29,8 +29,9 @@ import java.nio.charset.StandardCharsets
 
 /**
  * Keeps syncing while the app is closed: a foreground service (ongoing
- * notification) that hosts the Bare worklet running the sync engine and the
- * local web UI on 127.0.0.1:[PORT].
+ * notification) that hosts the Bare worklet running the sync engine. Its API
+ * listens on a socket file in the app's private folder ([LocalApi]), never on
+ * a network port, so other apps can't reach it.
  *
  * Background strategy:
  *  - foreground service: Android does not kill the process for memory/idle
@@ -44,7 +45,6 @@ import java.nio.charset.StandardCharsets
 class SyncService : Service() {
     companion object {
         const val TAG = "Syncker"
-        const val PORT = 7777
         const val CHANNEL = "sync"
         const val NOTIFICATION_ID = 1
         const val ACTION_WAKE = "app.syncker.WAKE"
@@ -136,7 +136,7 @@ class SyncService : Service() {
         val name = (Build.MODEL ?: "Android").trim()
         val shared = Environment.getExternalStorageDirectory().absolutePath
         storageOk = Environment.isExternalStorageManager()
-        val args = arrayOf(home, defaultFolders(this), name, PORT.toString(), bootstrap ?: "-", shared, if (storageOk) "1" else "0")
+        val args = arrayOf(home, defaultFolders(this), name, LocalApi.socketFile(this).absolutePath, bootstrap ?: "-", shared, if (storageOk) "1" else "0")
         val w = Worklet(Worklet.Options())
         try {
             assets.open("syncker.bundle").use { w.start("/syncker.bundle", it, args) }
@@ -179,7 +179,7 @@ class SyncService : Service() {
         when (msg.optString("type")) {
             "ready" -> {
                 ready = true
-                Log.i(TAG, "worklet ready on port ${msg.optInt("port")}")
+                Log.i(TAG, "worklet ready")
                 sendBroadcast(Intent("app.syncker.READY").setPackage(packageName))
             }
             "status" -> {

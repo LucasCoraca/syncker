@@ -2,77 +2,71 @@ package app.syncker
 
 import android.Manifest
 import android.annotation.SuppressLint
-import android.app.Activity
 import android.app.AlertDialog
 import android.content.ActivityNotFoundException
 import android.content.BroadcastReceiver
-import android.content.Context
 import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
+import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
-import android.os.Handler
-import android.os.Looper
 import android.os.PowerManager
-import android.provider.Settings
 import android.provider.MediaStore
-import android.view.View
-import android.webkit.PermissionRequest
-import android.webkit.ValueCallback
-import android.webkit.WebChromeClient
-import android.webkit.WebResourceError
-import android.webkit.WebResourceRequest
-import android.webkit.WebView
-import android.webkit.WebViewClient
+import android.provider.OpenableColumns
+import android.provider.Settings
 import android.widget.Toast
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
+import androidx.activity.compose.setContent
+import androidx.lifecycle.lifecycleScope
+import app.syncker.ui.AppModel
+import app.syncker.ui.Host
+import app.syncker.ui.SynckerApp
+import kotlinx.coroutines.launch
+import org.json.JSONObject
+import java.io.IOException
+import java.util.concurrent.Executors
 
 /**
- * The app window: a WebView of the sync engine's local web UI. Before the
- * first start it asks for the permissions that make background sync work.
+ * The app window: the native screens (app.syncker.ui), which talk to the sync
+ * engine over its private socket ([LocalApi]). Before the first start it asks
+ * for the permissions that make background sync work.
  */
-class MainActivity : Activity() {
+class MainActivity : ComponentActivity(), Host {
     companion object {
-        private const val REQ_FILES = 1
         private const val REQ_NOTIFY = 2
         private const val REQ_STORAGE = 3
         private const val REQ_BATTERY = 4
-        private const val REQ_CAMERA = 5
         private const val REQ_PHOTO = 6
         private const val REQ_PHOTO_CAMERA = 7
-        private const val HOME = "http://127.0.0.1:${SyncService.PORT}/"
+        private const val REQ_UPLOAD = 8
     }
 
-    private lateinit var web: WebView
-    private var fileCallback: ValueCallback<Array<Uri>>? = null
-    private var cameraRequest: PermissionRequest? = null
-    private var pendingInvite: String? = null
-    private val main = Handler(Looper.getMainLooper())
-    private var loaded = false
+    private lateinit var model: AppModel
+    private var started = false
+    private var uploadTo: Pair<String, String>? = null
+    private val uploader = Executors.newSingleThreadExecutor()
+    private var uploadSeq = 0
+    private var scanDone: ((String?) -> Unit)? = null
 
     private val readyReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) { load() }
     }
 
-    @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // Debug builds: allow chrome://inspect / DevTools (used by the UI tests).
-        if (applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE != 0) WebView.setWebContentsDebuggingEnabled(true)
-        web = WebView(this).apply {
-            settings.javaScriptEnabled = true
-            settings.domStorageEnabled = true
-            settings.allowFileAccess = false
-            settings.allowContentAccess = false
-            overScrollMode = View.OVER_SCROLL_NEVER
-            webViewClient = Client()
-            webChromeClient = Chrome()
+        model = AppModel(this, lifecycleScope, this)
+        inviteFrom(intent)?.let(model::openInvite)
+        setContent {
+            BackHandler { if (!model.back()) moveTaskToBack(true) } // keep syncing, don't finish
+            SynckerApp(model)
         }
-        setContentView(web)
-        pendingInvite = inviteFrom(intent)
         registerReceiver(readyReceiver, IntentFilter("app.syncker.READY"), RECEIVER_NOT_EXPORTED)
         // Sync runs regardless of the permission prompts below.
         startSync()
@@ -107,8 +101,7 @@ class MainActivity : Activity() {
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        val invite = inviteFrom(intent) ?: return
-        if (loaded) web.loadUrl(homeUrl(invite)) else pendingInvite = invite
+        inviteFrom(intent)?.let(model::openInvite)
     }
 
     /** A scanned invite QR code opens the app with syncker:<key>. */
@@ -118,12 +111,9 @@ class MainActivity : Activity() {
         return data.toString()
     }
 
-    private fun homeUrl(invite: String?) =
-        if (invite == null) HOME else HOME + "?invite=" + Uri.encode(invite)
-
     override fun onDestroy() {
         unregisterReceiver(readyReceiver)
-        web.destroy()
+        uploader.shutdown()
         super.onDestroy()
     }
 
@@ -168,35 +158,46 @@ class MainActivity : Activity() {
         }
     }
 
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+    @Deprecated("Deprecated in Java")
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == REQ_NOTIFY) askBattery()
         if (requestCode == REQ_PHOTO_CAMERA) {
-            if (grantResults.firstOrNull() == PackageManager.PERMISSION_GRANTED) takePhoto() else { fileCallback?.onReceiveValue(null); fileCallback = null }
-        }
-        if (requestCode == REQ_CAMERA) {
-            val req = cameraRequest ?: return
-            cameraRequest = null
-            if (grantResults.firstOrNull() == PackageManager.PERMISSION_GRANTED) req.grant(arrayOf(PermissionRequest.RESOURCE_VIDEO_CAPTURE)) else req.deny()
+            if (grantResults.firstOrNull() == PackageManager.PERMISSION_GRANTED) takePhoto() else finishScan(null)
         }
     }
 
+    @Deprecated("Deprecated in Java")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
         when (requestCode) {
             REQ_STORAGE -> {
-                if (loaded) web.reload() // default folder may have changed to shared storage
+                model.load() // the default folder may have changed to shared storage
                 askNotifications()
             }
-            REQ_BATTERY -> {}
             REQ_PHOTO -> {
                 val shot = PhotoProvider.file(this)
-                fileCallback?.onReceiveValue(if (resultCode == RESULT_OK && shot.length() > 0) arrayOf(PhotoProvider.URI) else null)
-                fileCallback = null
+                if (resultCode != RESULT_OK || shot.length() == 0L) return finishScan(null)
+                model.toast("Reading the QR code…")
+                lifecycleScope.launch {
+                    val bmp = try {
+                        val o = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+                        BitmapFactory.decodeFile(shot.path, o)
+                        var sample = 1
+                        while (maxOf(o.outWidth, o.outHeight) / (sample * 2) >= 2400) sample *= 2
+                        BitmapFactory.decodeFile(shot.path, BitmapFactory.Options().apply { inSampleSize = sample })
+                    } catch (_: Exception) { null }
+                    val text = bmp?.let { model.api.readQr(it) }
+                    if (text == null) model.toast("No Syncker invite found in the photo. Try again a little closer, with the whole code in view.")
+                    finishScan(text)
+                }
             }
-            REQ_FILES -> {
-                val uris = WebChromeClient.FileChooserParams.parseResult(resultCode, data)
-                    ?: data?.clipData?.let { clip -> Array(clip.itemCount) { clip.getItemAt(it).uri } }
-                fileCallback?.onReceiveValue(uris)
-                fileCallback = null
+            REQ_UPLOAD -> {
+                val to = uploadTo ?: return
+                uploadTo = null
+                if (resultCode != RESULT_OK || data == null) return
+                val uris = data.clipData?.let { clip -> List(clip.itemCount) { clip.getItemAt(it).uri } } ?: listOfNotNull(data.data)
+                for (uri in uris) uploader.execute { upload(to.first, to.second, uri) }
             }
         }
     }
@@ -207,80 +208,76 @@ class MainActivity : Activity() {
     }
 
     private fun load() {
-        if (loaded) return
-        loaded = true
-        web.loadUrl(homeUrl(pendingInvite))
-        pendingInvite = null
+        if (started) return
+        started = true
+        model.start()
     }
 
-    @Deprecated("Deprecated in Java")
-    override fun onBackPressed() {
-        // The page first closes what is open (a menu, a dialog, a selection).
-        web.evaluateJavascript("typeof onBack === 'function' && onBack()") { handled ->
-            if (handled != "true") {
-                if (web.canGoBack()) web.goBack() else moveTaskToBack(true) // keep syncing, don't finish
-            }
-        }
-    }
+    // ---- what the screens ask of Android ----
 
-    // ---- WebView glue ---------------------------------------------------
-
-    private inner class Client : WebViewClient() {
-        override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
-            val url = request.url
-            if (url.host == "127.0.0.1" && url.path == "/api/file") {
-                openFile(url.getQueryParameter("space") ?: "", url.getQueryParameter("path") ?: return true)
-                return true
-            }
-            if (url.host != "127.0.0.1") {
-                startActivity(Intent(Intent.ACTION_VIEW, url))
-                return true
-            }
-            return false
-        }
-
-        override fun onReceivedError(view: WebView, request: WebResourceRequest, error: WebResourceError) {
-            // The engine may still be starting: retry shortly.
-            if (request.isForMainFrame) main.postDelayed({ view.loadUrl(request.url.toString()) }, 700)
+    override fun openFile(space: String, path: String) {
+        val uri = FilesProvider.uriFor(space, path)
+        val intent = Intent(Intent.ACTION_VIEW)
+            .setDataAndType(uri, FilesProvider.mimeOf(path))
+            .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        try {
+            startActivity(Intent.createChooser(intent, path.substringAfterLast('/')))
+        } catch (e: ActivityNotFoundException) {
+            Toast.makeText(this, "No app can open this file", Toast.LENGTH_SHORT).show()
         }
     }
 
-    private inner class Chrome : WebChromeClient() {
-        // getUserMedia from the local UI (QR scanner): only camera, only for our own page.
-        override fun onPermissionRequest(request: PermissionRequest) {
-            if (request.origin.host != "127.0.0.1" || !request.resources.contains(PermissionRequest.RESOURCE_VIDEO_CAPTURE)) {
-                request.deny()
-                return
-            }
-            if (checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
-                request.grant(arrayOf(PermissionRequest.RESOURCE_VIDEO_CAPTURE))
-            } else {
-                cameraRequest?.deny()
-                cameraRequest = request
-                requestPermissions(arrayOf(Manifest.permission.CAMERA), REQ_CAMERA)
-            }
+    /** Pick files on the phone and add them to a folder of a drive. */
+    override fun pickUploads(space: String, dir: String) {
+        uploadTo = space to dir
+        val pick = Intent(Intent.ACTION_GET_CONTENT).setType("*/*")
+            .addCategory(Intent.CATEGORY_OPENABLE)
+            .putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
+        try {
+            startActivityForResult(Intent.createChooser(pick, "Upload to Syncker"), REQ_UPLOAD)
+        } catch (e: ActivityNotFoundException) {
+            uploadTo = null
+            Toast.makeText(this, "No app to pick files with", Toast.LENGTH_SHORT).show()
         }
+    }
 
-        override fun onShowFileChooser(view: WebView, callback: ValueCallback<Array<Uri>>, params: FileChooserParams): Boolean {
-            fileCallback?.onReceiveValue(null)
-            fileCallback = callback
-            // <input capture> (the QR code scanner): a photo from the camera app.
-            if (params.isCaptureEnabled && params.acceptTypes.any { it.startsWith("image/") }) {
-                if (checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) takePhoto()
-                else requestPermissions(arrayOf(Manifest.permission.CAMERA), REQ_PHOTO_CAMERA) // the camera app refuses us without it
-                return true
+    // Streams one picked file to the engine, telling the screens how far it got.
+    private fun upload(space: String, dir: String, uri: Uri) {
+        var name = "upload"
+        var size = -1L
+        try {
+            contentResolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME, OpenableColumns.SIZE), null, null, null)?.use { c ->
+                if (c.moveToFirst()) {
+                    if (!c.isNull(0)) name = c.getString(0)
+                    if (!c.isNull(1)) size = c.getLong(1)
+                }
             }
-            val intent = params.createIntent().apply {
-                if (params.mode == FileChooserParams.MODE_OPEN_MULTIPLE) putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
-            }
-            return try {
-                startActivityForResult(intent, REQ_FILES)
-                true
-            } catch (e: ActivityNotFoundException) {
-                fileCallback = null
-                false
-            }
+        } catch (_: Exception) {}
+        name = name.replace('/', '_').ifBlank { "upload" }
+        val path = (if (dir == "/") "" else dir.trimEnd('/')) + "/" + name
+        val id = "a" + (++uploadSeq)
+        val report = { bytes: Long, state: String, error: String? ->
+            val u = JSONObject().put("id", id).put("space", space).put("path", path).put("size", size).put("bytes", bytes).put("state", state)
+            if (error != null) u.put("error", error)
+            runOnUiThread { model.onUpload(u) }
         }
+        report(0, "active", null)
+        try {
+            val input = contentResolver.openInputStream(uri) ?: throw IOException("can't read the file")
+            val res = LocalApi.request(this, "PUT", "/api/file?space=" + Uri.encode(space) + "&path=" + Uri.encode(path), emptyMap(), input, size) { sent -> report(sent, "active", null) }
+            val text = res.text
+            if (res.status in 200..299) report(maxOf(size, 0), "done", null)
+            else report(0, "failed", try { JSONObject(text).optString("error", res.reason) } catch (_: Exception) { res.reason })
+        } catch (e: Exception) {
+            report(0, "failed", e.message ?: "upload failed")
+        }
+    }
+
+    /** A photo of the invite's QR code from the camera app: sharp and focused, read by the engine. */
+    override fun scanQr(onResult: (String?) -> Unit) {
+        scanDone = onResult
+        if (checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) takePhoto()
+        else requestPermissions(arrayOf(Manifest.permission.CAMERA), REQ_PHOTO_CAMERA) // the camera app refuses us without it
     }
 
     private fun takePhoto() {
@@ -293,20 +290,24 @@ class MainActivity : Activity() {
             startActivityForResult(intent, REQ_PHOTO)
         } catch (e: ActivityNotFoundException) {
             Toast.makeText(this, "No camera app found", Toast.LENGTH_SHORT).show()
-            fileCallback?.onReceiveValue(null)
-            fileCallback = null
+            finishScan(null)
         }
     }
 
-    private fun openFile(space: String, relPath: String) {
-        val uri = FilesProvider.uriFor(space, relPath)
-        val intent = Intent(Intent.ACTION_VIEW)
-            .setDataAndType(uri, FilesProvider.mimeOf(relPath))
-            .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-        try {
-            startActivity(Intent.createChooser(intent, relPath.substringAfterLast('/')))
-        } catch (e: ActivityNotFoundException) {
-            Toast.makeText(this, "No app can open this file", Toast.LENGTH_SHORT).show()
-        }
+    private fun finishScan(text: String?) {
+        val f = scanDone
+        scanDone = null
+        f?.invoke(text)
     }
+
+    override fun copy(label: String, text: String) {
+        getSystemService(ClipboardManager::class.java).setPrimaryClip(ClipData.newPlainText(label, text))
+    }
+
+    override fun share(text: String) {
+        val send = Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, text)
+        try { startActivity(Intent.createChooser(send, "Share invite")) } catch (_: ActivityNotFoundException) {}
+    }
+
+    override fun exit() { moveTaskToBack(true) }
 }

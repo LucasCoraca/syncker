@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <style name="Theme.Syncker" parent="android:Theme.Material.NoActionBar">
-        <item name="android:statusBarColor">#1A1D24</item>
+        <item name="android:statusBarColor">#1B1B1F</item>
         <item name="android:windowLightStatusBar">false</item>
-        <item name="android:navigationBarColor">#111318</item>
-        <item name="android:colorAccent">#8AB4F8</item>
-        <item name="android:windowBackground">#111318</item>
+        <item name="android:navigationBarColor">#232327</item>
+        <item name="android:colorAccent">#A8C7FA</item>
+        <item name="android:windowBackground">#1B1B1F</item>
     </style>
 </resources>
