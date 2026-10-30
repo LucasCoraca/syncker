@@ -7,6 +7,10 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.material3.PermanentDrawerSheet
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -61,25 +65,41 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
+/** Wide screens (tablets, unfolded foldables, phones on their side) keep the drawer open as a sidebar. */
+@Composable
+fun wide() = androidx.compose.ui.platform.LocalConfiguration.current.screenWidthDp >= 720
+
 @Composable
 fun MainScreen(m: AppModel) {
+    if (wide()) {
+        LaunchedEffect(Unit) { m.drawerOpen = false }
+        Row(Modifier.fillMaxSize().background(colors.bg)) {
+            PermanentDrawerSheet(Modifier.width(272.dp), drawerContainerColor = colors.bg) { DrawerBody(m) }
+            Content(m, Modifier.padding(end = 8.dp, bottom = 8.dp).clip(RoundedCornerShape(16.dp)))
+        }
+        return
+    }
     val drawer = rememberDrawerState(if (m.drawerOpen) DrawerValue.Open else DrawerValue.Closed)
     LaunchedEffect(m.drawerOpen) { if (m.drawerOpen) drawer.open() else drawer.close() }
     LaunchedEffect(drawer) { snapshotFlow { drawer.currentValue }.collect { m.drawerOpen = it == DrawerValue.Open } }
-    ModalNavigationDrawer(drawerState = drawer, drawerContent = { DrawerContent(m) }) {
-        Scaffold(
-            containerColor = colors.bg,
-            topBar = { TopBar(m) },
-            snackbarHost = { SnackbarHost(m.snackbar) },
-            floatingActionButton = { if (m.picked.isEmpty() && m.screen != Screen.Manage || m.cur == null) NewButton(m) },
-            bottomBar = { TransferBar(m) }
-        ) { pad ->
-            Column(
-                Modifier.padding(pad).fillMaxSize()
-                    .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)).background(colors.surface)
-            ) {
-                if (m.screen == Screen.Manage) ManageScreen(m) else FilesPane(m)
-            }
+    ModalNavigationDrawer(drawerState = drawer, drawerContent = {
+        ModalDrawerSheet(drawerContainerColor = colors.surface, modifier = Modifier.width(300.dp)) { DrawerBody(m) }
+    }) {
+        Content(m, Modifier.clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)))
+    }
+}
+
+@Composable
+private fun Content(m: AppModel, shape: Modifier) {
+    Scaffold(
+        containerColor = colors.bg,
+        topBar = { TopBar(m) },
+        snackbarHost = { SnackbarHost(m.snackbar) },
+        floatingActionButton = { if (m.picked.isEmpty() && m.screen != Screen.Manage || m.cur == null) NewButton(m) },
+        bottomBar = { TransferBar(m) }
+    ) { pad ->
+        Column(Modifier.padding(pad).fillMaxSize().then(shape).background(colors.surface)) {
+            if (m.screen == Screen.Manage) ManageScreen(m) else FilesPane(m)
         }
     }
 }
@@ -93,10 +113,11 @@ private fun TopBar(m: AppModel) {
         kotlinx.coroutines.delay(200)
         if (text.trim() != m.query.trim()) m.search(text.trim())
     }
+    val wide = wide()
     Row(Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-        IconButton({ m.drawerOpen = true }) { Ico("i-menu", tint = colors.muted) }
+        if (!wide) IconButton({ m.drawerOpen = true }) { Ico("i-menu", tint = colors.muted) }
         Row(
-            Modifier.weight(1f).height(48.dp).clip(RoundedCornerShape(99.dp)).background(colors.surface2).padding(horizontal = 12.dp),
+            Modifier.weight(1f).wrapContentWidth(Alignment.Start).widthIn(max = 720.dp).fillMaxWidth().height(48.dp).clip(RoundedCornerShape(99.dp)).background(colors.surface2).padding(horizontal = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Ico("i-search", tint = colors.muted, size = 22.dp)
@@ -116,10 +137,10 @@ private fun TopBar(m: AppModel) {
 }
 
 @Composable
-private fun DrawerContent(m: AppModel) {
-    ModalDrawerSheet(drawerContainerColor = colors.surface, modifier = Modifier.width(300.dp)) {
-        Column(Modifier.fillMaxSize().padding(vertical = 16.dp)) {
-            Row(Modifier.padding(start = 20.dp, bottom = 16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+private fun DrawerBody(m: AppModel) {
+    run {
+        Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(vertical = 16.dp)) {
+            Row(Modifier.padding(start = 20.dp, bottom = 16.dp).height(32.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 Logo(32.dp); Text("Syncker", fontSize = 22.sp)
             }
             NavRow("i-recent", "Recent", on = m.screen == Screen.Recent) { m.goTo(Screen.Recent) }
@@ -154,7 +175,7 @@ private fun DrawerContent(m: AppModel) {
 private fun NavRow(icon: String, label: String, on: Boolean = false, sub: Boolean = false, trailing: (@Composable () -> Unit)? = null, onClick: () -> Unit) {
     Row(
         Modifier.fillMaxWidth().padding(end = 12.dp).height(44.dp).clip(RoundedCornerShape(topEnd = 99.dp, bottomEnd = 99.dp))
-            .background(if (on) colors.selected else colors.surface).clickable(onClick = onClick).padding(start = 20.dp, end = 16.dp),
+            .then(if (on) Modifier.background(colors.selected) else Modifier).clickable(onClick = onClick).padding(start = 20.dp, end = 16.dp),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         Ico(icon, tint = if (sub) colors.muted else colors.text, size = 20.dp)

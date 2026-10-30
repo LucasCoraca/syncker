@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -49,8 +50,8 @@ fun SetupScreen(m: AppModel) {
     LaunchedEffect(m.pendingInvite) { m.pendingInvite?.let { join = true; invite = it; drive = inviteName(it) } }
 
     Scaffold(containerColor = colors.bg, snackbarHost = { SnackbarHost(m.snackbar) }) { pad ->
-        Column(Modifier.padding(pad).fillMaxSize().verticalScroll(rememberScrollState()).statusBarsPadding().padding(16.dp)) {
-            Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(colors.surface).padding(24.dp)) {
+        Column(Modifier.padding(pad).fillMaxSize().verticalScroll(rememberScrollState()).statusBarsPadding().padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+            Column(Modifier.widthIn(max = 560.dp).fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(colors.surface).padding(24.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) { Logo(36.dp); Text("Syncker", fontSize = 22.sp) }
                 Gap(20.dp)
                 Text("Set up this device", fontSize = 24.sp)

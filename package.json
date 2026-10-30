@@ -1,6 +1,6 @@
 {
   "name": "syncker",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Peer-to-peer Google-Drive-like folder sync for Linux and Android, built on Hypercore",
   "main": "index.js",
   "scripts": {

@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -43,7 +44,7 @@ private val REASONS = mapOf(
 @Composable
 fun ManageScreen(m: AppModel) {
     val d = m.cur ?: return
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(start = 16.dp, end = 16.dp, bottom = 120.dp)) {
+    Column(Modifier.widthIn(max = 760.dp).fillMaxSize().verticalScroll(rememberScrollState()).padding(start = 16.dp, end = 16.dp, bottom = 120.dp)) {
         Row(Modifier.padding(top = 12.dp).horizontalScroll(rememberScrollState(Int.MAX_VALUE)), verticalAlignment = Alignment.CenterVertically) {
             Text(d.name, Modifier.clip(RoundedCornerShape(99.dp)).clickable { m.go("/") }.padding(horizontal = 8.dp, vertical = 4.dp), fontSize = 20.sp, maxLines = 1, softWrap = false)
             Ico("i-chev", tint = colors.muted, size = 20.dp)
@@ -61,7 +62,7 @@ fun ManageScreen(m: AppModel) {
         for (p in d.peers) {
             val x = m.allTransfers().filter { it.moving && it.space == d.id && it.device == p.name }
             val sub = if (p.online) "Online" + (if (x.isNotEmpty()) " · ${if (x.any { it.dir == "down" }) "sending you" else "receiving"} ${count(x.size, "1 file", "files")}" else "")
-            else p.lastSeen?.let { "Last seen ${ago(it)}" } ?: "Never connected"
+            else p.lastSeen?.takeIf { it > 0 }?.let { "Last seen ${ago(it)}" } ?: "Never connected"
             Device(p.name, sub, stores(p.key), p.online, false, deviceIcon(p.name)) { m.show(Dialog.Choose(d.id, p.key)) }
         }
         if (d.peers.isEmpty()) Small("No other devices yet. Add one below.", Modifier.padding(top = 4.dp))
